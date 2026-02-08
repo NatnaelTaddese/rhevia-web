@@ -49,7 +49,7 @@ export function LoginForm({
               onClick={async () => {
                 await signIn.social({
                   provider: "google",
-                  callbackURL: "/dashboard",
+                  callbackURL: process.env.NEXT_PUBLIC_FRONTEND_URL! as string,
                   fetchOptions: {
                     onRequest: () => {
                       setLoading(true);
