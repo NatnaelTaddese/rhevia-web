@@ -1,6 +1,8 @@
 "use client";
+import { Film01Icon, LayoutBottomIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import Link from "next/link";
 import { useState } from "react";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -10,12 +12,10 @@ import {
   FieldSeparator,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { LayoutBottomIcon, Film01Icon } from "@hugeicons/core-free-icons";
 
 import { signIn } from "@/lib/auth-client";
+import { cn } from "@/lib/utils";
 import { Spinner } from "./ui/spinner";
-import Link from "next/link";
 
 export function LoginForm({
   className,
