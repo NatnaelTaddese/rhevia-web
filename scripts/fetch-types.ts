@@ -1,8 +1,7 @@
 import fs from "fs/promises";
 import path from "path";
 
-const backendUrl =
-  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
+const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL as string;
 const dtsPath = "/server.d.ts";
 const outputDir = "types/server.d.ts";
 
