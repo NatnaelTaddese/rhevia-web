@@ -12,10 +12,10 @@ async function fetchTypes() {
       throw new Error(`Failed to fetch types: ${response.status}`);
     }
     const typesContent = await response.text();
-    const fixed = typesContent + "\n\nexport {};\n";
+
     // Write to file
     const outputPath = path.join(process.cwd(), outputDir);
-    await fs.writeFile(outputPath, fixed, "utf-8");
+    await fs.writeFile(outputPath, typesContent, "utf-8");
     console.log(`Types fetched and saved to ${outputPath}`);
   } catch (error) {
     console.error("Error fetching types:", error);
