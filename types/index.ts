@@ -1,1 +1,1 @@
-export type * from "./server";
+export * from "./server";
