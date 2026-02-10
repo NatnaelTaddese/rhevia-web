@@ -1,5 +1,5 @@
 import { treaty } from "@elysiajs/eden";
-import type { App } from "@/types";
+import type { App } from "../types";
 
 const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL as string;
 
