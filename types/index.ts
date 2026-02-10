@@ -1,4 +1,3 @@
-import type { App } from "./server.d.ts";
+/// <reference path="./server.d.ts" />
 
-// Re-export
-export type { App };
+export type { App } from "./server";
