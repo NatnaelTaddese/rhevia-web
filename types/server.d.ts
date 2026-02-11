@@ -95,3 +95,5 @@ declare const app: Elysia<"", {
 }>;
 export default app;
 export type App = typeof app;
+
+export {};

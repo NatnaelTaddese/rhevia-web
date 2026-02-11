@@ -11,8 +11,8 @@ async function fetchTypes() {
     if (!response.ok) {
       throw new Error(`Failed to fetch types: ${response.status}`);
     }
-    const typesContent = await response.text();
-
+    let typesContent = await response.text();
+    typesContent = typesContent + "\nexport {};";
     // Write to file
     const outputPath = path.join(process.cwd(), outputDir);
     await fs.writeFile(outputPath, typesContent, "utf-8");
