@@ -48,9 +48,7 @@ declare const app: Elysia<"", {
         params: {};
         query: unknown;
         headers: unknown;
-        response: {
-            200: string;
-        };
+        response: {};
     };
 } & {
     [x: string]: {
@@ -95,5 +93,3 @@ declare const app: Elysia<"", {
 }>;
 export default app;
 export type App = typeof app;
-
-export {};

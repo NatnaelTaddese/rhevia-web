@@ -7,16 +7,16 @@ const outputDir = "types/server.d.ts";
 
 async function fetchTypes() {
   try {
-    const response = await fetch(`${backendUrl}/server.d.ts`);
+    const response = await fetch(`${backendUrl}${dtsPath}`);
     if (!response.ok) {
       throw new Error(`Failed to fetch types: ${response.status}`);
     }
-    let typesContent = await response.text();
+    const typesContent = await response.text();
 
     // Debug: log the first 500 characters
     console.log("Fetched content preview:", typesContent.substring(0, 500));
 
-    typesContent = typesContent + "\nexport {};";
+    // typesContent = typesContent + "\nexport {};";
     const outputPath = path.join(process.cwd(), outputDir);
     await fs.writeFile(outputPath, typesContent, "utf-8");
     console.log(`Types fetched and saved to ${outputPath}`);
