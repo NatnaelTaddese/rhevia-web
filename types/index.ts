@@ -1,2 +1,2 @@
-import type { App } from "./server.d.js";
+import type { App } from "./server.d.ts";
 export type { App };
