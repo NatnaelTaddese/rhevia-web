@@ -48,7 +48,9 @@ declare const app: Elysia<"", {
         params: {};
         query: unknown;
         headers: unknown;
-        response: {};
+        response: {
+            200: string;
+        };
     };
 } & {
     [x: string]: {

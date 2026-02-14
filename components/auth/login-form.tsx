@@ -1,8 +1,14 @@
 "use client";
-import { Film01Icon, LayoutBottomIcon } from "@hugeicons/core-free-icons";
+import { Film01Icon, AlertCircleIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
 import { useState } from "react";
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -15,19 +21,48 @@ import { Input } from "@/components/ui/input";
 
 import { signIn } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
-import { Spinner } from "./ui/spinner";
+import { Spinner } from "../ui/spinner";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const handleEmailSignIn = async (e: React.SubmitEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setErrorMessage(null);
+
+    await signIn.email({
+      email,
+      password,
+      callbackURL: process.env.NEXT_PUBLIC_FRONTEND_URL as string,
+      fetchOptions: {
+        onRequest: () => {
+          setLoading(true);
+        },
+        onResponse: () => {
+          setLoading(false);
+        },
+        onError: (ctx) => {
+          const message =
+            ctx?.error?.message ?? "We couldn't sign you in. Please try again.";
+          setErrorMessage(message);
+        },
+      },
+    });
+  };
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <form>
+      <form onSubmit={handleEmailSignIn}>
         <FieldGroup>
           <div className="flex flex-col items-center gap-2 text-center">
-            <a
+            <Link
               href="#"
               className="flex flex-col items-center gap-2 font-medium"
             >
@@ -38,10 +73,24 @@ export function LoginForm({
                   className="size-6"
                 />
               </div>
-              <span className="sr-only">Rhevia .</span>
-            </a>
+              <span className="sr-only">Rhevia.</span>
+            </Link>
             <h1 className="text-xl font-bold">Welcome to Rhevia.</h1>
           </div>
+
+          {errorMessage && (
+            <Alert variant="destructive" className="w-full">
+              <HugeiconsIcon
+                icon={AlertCircleIcon}
+                strokeWidth={2}
+                className="size-4"
+              />
+              <AlertTitle>Sign-in failed</AlertTitle>
+              <AlertDescription className="min-w-full">
+                {errorMessage}
+              </AlertDescription>
+            </Alert>
+          )}
 
           <Field>
             <Button
@@ -49,15 +98,23 @@ export function LoginForm({
               type="button"
               disabled={loading}
               onClick={async () => {
+                setErrorMessage(null);
+
                 await signIn.social({
                   provider: "google",
-                  callbackURL: process.env.NEXT_PUBLIC_FRONTEND_URL! as string,
+                  callbackURL: process.env.NEXT_PUBLIC_FRONTEND_URL as string,
                   fetchOptions: {
                     onRequest: () => {
                       setLoading(true);
                     },
                     onResponse: () => {
                       setLoading(false);
+                    },
+                    onError: (ctx) => {
+                      const message =
+                        ctx?.error?.message ??
+                        "Google sign-in failed. Please try again.";
+                      setErrorMessage(message);
                     },
                   },
                 });
@@ -72,6 +129,7 @@ export function LoginForm({
                   height="1em"
                   viewBox="0 0 256 262"
                 >
+                  <title>Google Logo</title>
                   <path
                     fill="#4285F4"
                     d="M255.878 133.451c0-10.734-.871-18.567-2.756-26.69H130.55v48.448h71.947c-1.45 12.04-9.283 30.172-26.69 42.356l-.244 1.622l38.755 30.023l2.685.268c24.659-22.774 38.875-56.282 38.875-96.027"
@@ -101,15 +159,37 @@ export function LoginForm({
               type="email"
               placeholder="m@example.com"
               required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={loading}
             />
           </Field>
           <Field>
-            <Button type="submit">Login</Button>
+            <FieldLabel htmlFor="password">Password</FieldLabel>
+            <Input
+              id="password"
+              type="password"
+              placeholder="Enter your password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={loading}
+            />
+          </Field>
+          <Field>
+            <Button
+              type="submit"
+              disabled={
+                loading || email.trim().length === 0 || password.length === 0
+              }
+            >
+              {loading ? <Spinner></Spinner> : "Login"}
+            </Button>
           </Field>
         </FieldGroup>
       </form>
       <FieldDescription className="text-center">
-        Don&apos;t have an account? <Link href="#">Sign up</Link>
+        Don&apos;t have an account? <Link href="/signup">Sign up</Link>
       </FieldDescription>
     </div>
   );
