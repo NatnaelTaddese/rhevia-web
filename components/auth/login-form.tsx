@@ -145,7 +145,7 @@ export function LoginForm({
               Continue with Google
             </Button>
           </Field>
-          <FieldSeparator>Or</FieldSeparator>
+          <FieldSeparator className="select-none">Or</FieldSeparator>
           <Field>
             <FieldLabel htmlFor="email">Email</FieldLabel>
             <Input
@@ -182,7 +182,7 @@ export function LoginForm({
           </Field>
         </FieldGroup>
       </form>
-      <FieldDescription className="text-center">
+      <FieldDescription className="text-center select-none">
         Don&apos;t have an account? <Link href="/signup">Sign up</Link>
       </FieldDescription>
     </div>

@@ -160,7 +160,7 @@ export function SignupForm({
               Continue with Google
             </Button>
           </Field>
-          <FieldSeparator>Or</FieldSeparator>
+          <FieldSeparator className="select-none">Or</FieldSeparator>
           <Field>
             <FieldLabel htmlFor="name">Name</FieldLabel>
             <Input
@@ -227,7 +227,7 @@ export function SignupForm({
           </Field>
         </FieldGroup>
       </form>
-      <FieldDescription className="text-center">
+      <FieldDescription className="text-center select-none">
         Already have an account? <Link href="/login">Log in</Link>
       </FieldDescription>
     </div>
