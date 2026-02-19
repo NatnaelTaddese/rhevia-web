@@ -1,27 +1,28 @@
 "use client";
 
+import { useEffect } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Home02Icon,
   LibraryIcon,
-  Logout03Icon,
   Tv01Icon,
+  Search01Icon,
+  Logout03Icon,
   User02Icon,
 } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
+import { useSession, signOut, authClient } from "@/lib/auth-client";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
+  DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { authClient, signOut, useSession } from "@/lib/auth-client";
-import { cn } from "@/lib/utils";
 
 const navLinks = [
   { href: "/", label: "Home", icon: Home02Icon },
@@ -47,15 +48,10 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-md">
-      <div className="container mx-auto flex h-14 items-center justify-between px-4">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <span className="text-lg font-semibold tracking-tight">Rhevia</span>
-        </Link>
-
-        {/* Navigation */}
-        <nav className="flex items-center gap-1">
+    <header className="fixed left-1/2 top-4 z-50 -translate-x-1/2">
+      <div className="flex items-center gap-3">
+        {/* Left: Navigation - Dynamic Island Style */}
+        <nav className="flex h-11 items-center gap-0.5 rounded-full bg-black/80 px-1.5 backdrop-blur-xl shadow-xl ring-1 ring-white/20">
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
             return (
@@ -63,34 +59,39 @@ export function Header() {
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "inline-flex h-7 items-center gap-1.5 rounded-md px-3 text-xs/relaxed font-medium transition-colors",
+                  "relative flex h-9 items-center gap-2 rounded-full px-4 text-sm font-medium transition-all duration-200",
                   isActive
-                    ? "bg-secondary text-secondary-foreground"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    ? "bg-white/15 text-white"
+                    : "text-white/60 hover:bg-white/10 hover:text-white"
                 )}
               >
-                <HugeiconsIcon icon={link.icon} strokeWidth={2} />
-                <span>{link.label}</span>
+                <HugeiconsIcon icon={link.icon} strokeWidth={2} className="size-4" />
+                <span className="hidden sm:inline">{link.label}</span>
               </Link>
             );
           })}
         </nav>
 
-        {/* User Section */}
-        <div className="flex items-center gap-2">
+        {/* Right: Search + User - Dynamic Island Style */}
+        <div className="flex h-11 items-center gap-0.5 rounded-full bg-black/80 px-1.5 backdrop-blur-xl shadow-xl ring-1 ring-white/20">
+          {/* Search Button */}
+          <button className="flex h-9 w-9 items-center justify-center rounded-full text-white/60 transition-all duration-200 hover:bg-white/10 hover:text-white">
+            <HugeiconsIcon icon={Search01Icon} strokeWidth={2} className="size-4" />
+          </button>
+
+          {/* User Avatar */}
           {isPending || !session?.user ? (
-            // Loading state - shows placeholder to avoid flicker
-            <div className="size-8 animate-pulse rounded-full bg-muted" />
+            <div className="size-9 animate-pulse rounded-full bg-white/20" />
           ) : (
             <DropdownMenu>
               <DropdownMenuTrigger>
-                <button className="relative flex size-8 items-center justify-center rounded-full ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-                  <Avatar size="sm">
+                <button className="flex size-9 items-center justify-center rounded-full transition-all duration-200 hover:bg-white/10 focus:outline-none">
+                  <Avatar size="sm" className="size-7 ring-[1.5px] ring-gradient-to-b ring-white/40 ring-offset-1 ring-offset-black/50">
                     <AvatarImage
                       src={session.user.image || undefined}
                       alt={session.user.name || session.user.email}
                     />
-                    <AvatarFallback>
+                    <AvatarFallback className="bg-white/20 text-white text-xs">
                       {session.user.name?.charAt(0).toUpperCase() ||
                         session.user.email?.charAt(0).toUpperCase() ||
                         "U"}
