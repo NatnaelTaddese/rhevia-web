@@ -100,6 +100,7 @@ export function Header() {
                     <AvatarImage
                       src={session.user.image || undefined}
                       alt={session.user.name || session.user.email}
+                      className="size-8"
                     />
                     <AvatarFallback className="bg-white/20 text-white text-xs">
                       {session.user.name?.charAt(0).toUpperCase() ||
