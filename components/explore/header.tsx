@@ -140,7 +140,7 @@ export function Header() {
               ) : (
                 <DropdownMenuContent
                   align="end"
-                  className="mt-4 w-56 rounded-2xl bg-black/80 px-1.5 backdrop-blur-xl shadow-xl ring-2 ring-white/10"
+                  className="mt-4 w-56 rounded-2xl bg-black/80 p-3 backdrop-blur-xl shadow-xl ring-2 ring-white/10"
                 >
                   <div className="px-2 py-1.5">
                     <p className="text-xs font-medium">{session.user.name}</p>
