@@ -96,11 +96,14 @@ export function Header() {
             <DropdownMenu>
               <DropdownMenuTrigger>
                 <Button className="flex mx-1 size-8 items-center justify-center bg-transparent rounded-full cursor-pointer transition-all duration-200 hover:bg-white/10 focus:outline-none">
-                  <Avatar size="default" className="size-8">
+                  <Avatar
+                    size="default"
+                    className="size-8 flex items-center justify-center"
+                  >
                     <AvatarImage
                       src={session.user.image || undefined}
                       alt={session.user.name || session.user.email}
-                      className="size-4"
+                      className="size-7"
                     />
                     <AvatarFallback className="bg-white/20 text-white text-xs">
                       {session.user.name?.charAt(0).toUpperCase() ||
