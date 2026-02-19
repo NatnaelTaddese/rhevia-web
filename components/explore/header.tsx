@@ -21,8 +21,8 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { Button } from "../ui/button";
 
 const navLinks = [
   { href: "/", label: "Home", icon: Home02Icon },
@@ -62,10 +62,15 @@ export function Header() {
                   "relative flex h-9 items-center gap-2 rounded-full px-4 text-sm font-medium transition-all duration-200",
                   isActive
                     ? "bg-white/15 text-white"
-                    : "text-white/60 hover:bg-white/10 hover:text-white"
+                    : "text-white/60 hover:bg-white/10 hover:text-white",
                 )}
               >
-                <HugeiconsIcon icon={link.icon} strokeWidth={2} className="size-4" />
+                <HugeiconsIcon
+                  icon={link.icon}
+                  strokeWidth={2}
+                  fill={isActive ? "white" : ""}
+                  className="size-4"
+                />
                 <span className="hidden sm:inline">{link.label}</span>
               </Link>
             );
@@ -75,9 +80,13 @@ export function Header() {
         {/* Right: Search + User - Dynamic Island Style */}
         <div className="flex h-11 items-center gap-0.5 rounded-full bg-black/80 px-1.5 backdrop-blur-xl shadow-xl ring-1 ring-white/20">
           {/* Search Button */}
-          <button className="flex h-9 w-9 items-center justify-center rounded-full text-white/60 transition-all duration-200 hover:bg-white/10 hover:text-white">
-            <HugeiconsIcon icon={Search01Icon} strokeWidth={2} className="size-4" />
-          </button>
+          <Button className="flex h-9 w-9 items-center justify-center rounded-full bg-transparent text-white/60 transition-all duration-200 hover:bg-white/10 hover:text-white">
+            <HugeiconsIcon
+              icon={Search01Icon}
+              strokeWidth={2}
+              className="size-4"
+            />
+          </Button>
 
           {/* User Avatar */}
           {isPending || !session?.user ? (
@@ -85,8 +94,8 @@ export function Header() {
           ) : (
             <DropdownMenu>
               <DropdownMenuTrigger>
-                <button className="flex size-9 items-center justify-center rounded-full transition-all duration-200 hover:bg-white/10 focus:outline-none">
-                  <Avatar size="sm" className="size-7 ring-[1.5px] ring-gradient-to-b ring-white/40 ring-offset-1 ring-offset-black/50">
+                <Button className="flex size-9 items-center justify-center bg-transparent rounded-full transition-all duration-200 hover:bg-white/10 focus:outline-none">
+                  <Avatar size="sm" className="size-7">
                     <AvatarImage
                       src={session.user.image || undefined}
                       alt={session.user.name || session.user.email}
@@ -97,33 +106,58 @@ export function Header() {
                         "U"}
                     </AvatarFallback>
                   </Avatar>
-                </button>
+                </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
+
+              <DropdownMenuContent
+                align="end"
+                className="mt-4 w-56 rounded-2xl bg-black/80 px-1.5 backdrop-blur-xl shadow-xl ring-1 ring-white/20"
+              >
                 <div className="px-2 py-1.5">
                   <p className="text-xs font-medium">{session.user.name}</p>
-                  <p className="text-[0.625rem] text-muted-foreground">
-                    {session.user.email}
+                  <p className="text-[0.625rem] text-white/60">
+                    {session?.user?.isAnonymous
+                      ? "login to track your progress"
+                      : session.user.email}
                   </p>
                 </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <Link
-                    href="/profile"
-                    className="flex w-full items-center gap-2"
+                <div className="h-px bg-white/10 my-1" />
+
+                {session?.user?.isAnonymous ? (
+                  ""
+                ) : (
+                  <DropdownMenuItem className="rounded-2xl">
+                    <Link
+                      href="/profile"
+                      className="flex w-full items-center gap-2 "
+                    >
+                      <HugeiconsIcon icon={User02Icon} strokeWidth={2} />
+                      <span>Profile</span>
+                    </Link>
+                    <div className="h-px bg-white/10 my-1" />
+                  </DropdownMenuItem>
+                )}
+
+                {session?.user?.isAnonymous ? (
+                  <DropdownMenuItem className="rounded-2xl">
+                    <Link
+                      href="/login"
+                      className="flex w-full items-center gap-2"
+                    >
+                      <HugeiconsIcon icon={Logout03Icon} strokeWidth={2} />
+                      <span>Log In</span>
+                    </Link>
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem
+                    onClick={handleSignOut}
+                    variant="destructive"
+                    className="rounded-2xl"
                   >
-                    <HugeiconsIcon icon={User02Icon} strokeWidth={2} />
-                    <span>Profile</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={handleSignOut}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <HugeiconsIcon icon={Logout03Icon} strokeWidth={2} />
-                  <span>Sign out</span>
-                </DropdownMenuItem>
+                    <HugeiconsIcon icon={Logout03Icon} strokeWidth={2} />
+                    <span>Sign out</span>
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           )}
