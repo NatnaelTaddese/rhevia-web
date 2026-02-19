@@ -1,4 +1,4 @@
-import { Header } from "@/components/header";
+import { Header } from "@/components/explore/header";
 
 export default function ExploreLayout({
   children,
