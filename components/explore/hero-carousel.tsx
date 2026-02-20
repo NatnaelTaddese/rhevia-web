@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion, AnimatePresence } from "motion/react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   PlayIcon,
@@ -13,207 +12,265 @@ import {
 } from "@hugeicons/core-free-icons";
 
 import { Button } from "@/components/ui/button";
-import type { MovieResultItem } from "@lorenzopant/tmdb";
+import { cn } from "@/lib/utils";
+import type { HeroMovie } from "@/lib/explore-data";
 
 interface HeroCarouselProps {
-  movies: MovieResultItem[];
+  movies: HeroMovie[];
+  autoPlayInterval?: number;
 }
 
-export function HeroCarousel({ movies }: HeroCarouselProps) {
+export function HeroCarousel({
+  movies,
+  autoPlayInterval = 8000,
+}: HeroCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [direction, setDirection] = useState(0);
-
-  const slideVariants = {
-    enter: (direction: number) => ({
-      x: direction > 0 ? 1000 : -1000,
-      opacity: 0,
-    }),
-    center: {
-      zIndex: 1,
-      x: 0,
-      opacity: 1,
-    },
-    exit: (direction: number) => ({
-      zIndex: 0,
-      x: direction < 0 ? 1000 : -1000,
-      opacity: 0,
-    }),
-  };
-
-  const swipeConfidenceThreshold = 10000;
-  const swipePower = (offset: number, velocity: number) => {
-    return Math.abs(offset) * velocity;
-  };
-
-  const paginate = useCallback(
-    (newDirection: number) => {
-      setDirection(newDirection);
-      setCurrentIndex((prevIndex) => {
-        let nextIndex = prevIndex + newDirection;
-        if (nextIndex < 0) nextIndex = movies.length - 1;
-        if (nextIndex >= movies.length) nextIndex = 0;
-        return nextIndex;
-      });
-    },
-    [movies.length]
-  );
-
-  // Auto-advance carousel
-  useEffect(() => {
-    const timer = setInterval(() => {
-      paginate(1);
-    }, 8000);
-    return () => clearInterval(timer);
-  }, [paginate]);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set([0]));
+  const [isPaused, setIsPaused] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const currentMovie = movies[currentIndex];
-  const backdropUrl = currentMovie.backdrop_path
-    ? `https://image.tmdb.org/t/p/original${currentMovie.backdrop_path}`
-    : null;
+
+  // Preload adjacent images
+  useEffect(() => {
+    const indicesToPreload = [
+      currentIndex,
+      (currentIndex + 1) % movies.length,
+      (currentIndex - 1 + movies.length) % movies.length,
+    ];
+
+    indicesToPreload.forEach((index) => {
+      if (!loadedImages.has(index)) {
+        const img = new window.Image();
+        img.src = movies[index].backdropUrl;
+        img.onload = () => {
+          setLoadedImages((prev) => new Set([...prev, index]));
+        };
+      }
+    });
+  }, [currentIndex, movies, loadedImages]);
+
+  const goToSlide = useCallback(
+    (index: number) => {
+      if (isTransitioning || index === currentIndex) return;
+
+      setIsTransitioning(true);
+      setCurrentIndex(index);
+
+      setTimeout(() => {
+        setIsTransitioning(false);
+      }, 500);
+    },
+    [isTransitioning, currentIndex],
+  );
+
+  const goToNext = useCallback(() => {
+    goToSlide((currentIndex + 1) % movies.length);
+  }, [currentIndex, movies.length, goToSlide]);
+
+  const goToPrevious = useCallback(() => {
+    goToSlide((currentIndex - 1 + movies.length) % movies.length);
+  }, [currentIndex, movies.length, goToSlide]);
+
+  // Auto-play functionality
+  useEffect(() => {
+    if (isPaused) {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      return;
+    }
+
+    timerRef.current = setInterval(() => {
+      goToNext();
+    }, autoPlayInterval);
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [isPaused, goToNext, autoPlayInterval]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") {
+        goToPrevious();
+      } else if (e.key === "ArrowRight") {
+        goToNext();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [goToNext, goToPrevious]);
+
+  if (!movies.length) return null;
 
   return (
-    <section className="relative w-full h-[70vh] min-h-[500px] max-h-[900px] overflow-hidden">
-      {/* Background Image */}
-      <AnimatePresence initial={false} custom={direction}>
-        <motion.div
-          key={currentIndex}
-          custom={direction}
-          variants={slideVariants}
-          initial="enter"
-          animate="center"
-          exit="exit"
-          transition={{
-            x: { type: "spring", stiffness: 300, damping: 30 },
-            opacity: { duration: 0.2 },
-          }}
-          drag="x"
-          dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={1}
-          onDragEnd={(e, { offset, velocity }) => {
-            const swipe = swipePower(offset.x, velocity.x);
-            if (swipe < -swipeConfidenceThreshold) {
-              paginate(1);
-            } else if (swipe > swipeConfidenceThreshold) {
-              paginate(-1);
-            }
-          }}
-          className="absolute inset-0"
-        >
-          {backdropUrl ? (
-            <Image
-              src={backdropUrl}
-              alt={currentMovie.title}
-              fill
-              priority
-              className="object-cover object-top"
-              sizes="100vw"
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-b from-slate-800 to-slate-900" />
+    <section
+      className="relative w-full h-[70vh] min-h-125 max-h-225 overflow-hidden"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      aria-roledescription="carousel"
+      aria-label="Trending movies"
+    >
+      {/* Background Images */}
+      {movies.map((movie, index) => (
+        <div
+          key={movie.id}
+          className={cn(
+            "absolute inset-0 transition-opacity duration-700 ease-in-out",
+            index === currentIndex ? "opacity-100 z-10" : "opacity-0 z-0",
           )}
+          aria-hidden={index !== currentIndex}
+        >
+          <Image
+            src={movie.backdropUrl}
+            alt={movie.title}
+            fill
+            priority={index === 0}
+            className="object-cover object-top"
+            sizes="100vw"
+          />
           {/* Gradient Overlays */}
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-transparent" />
-        </motion.div>
-      </AnimatePresence>
+        </div>
+      ))}
 
       {/* Content */}
-      <div className="absolute inset-0 flex items-end">
+      <div className="absolute inset-0 z-20 flex items-end">
         <div className="container mx-auto px-4 pb-16 md:pb-24">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentIndex}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.5 }}
-              className="max-w-2xl"
+          <div className="max-w-2xl space-y-4">
+            {/* Title with animation */}
+            <h1
+              key={currentMovie.id}
+              className={cn(
+                "text-4xl md:text-5xl lg:text-6xl font-bold text-foreground",
+                "animate-in fade-in slide-in-from-bottom-4 duration-500",
+              )}
             >
-              {/* Title */}
-              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-4 leading-tight">
-                {currentMovie.title}
-              </h1>
+              {currentMovie.title}
+            </h1>
 
-              {/* Meta Info */}
-              <div className="flex items-center gap-4 text-sm text-white/80 mb-4">
-                {currentMovie.vote_average > 0 && (
-                  <span className="flex items-center gap-1">
-                    <span className="text-yellow-400">★</span>
-                    {currentMovie.vote_average.toFixed(1)}
-                  </span>
+            {/* Meta Info */}
+            <div
+              key={`meta-${currentMovie.id}`}
+              className={cn(
+                "flex items-center gap-4 text-sm text-muted-foreground",
+                "animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100",
+              )}
+            >
+              <span className="flex items-center gap-1.5">
+                <span className="text-yellow-500">★</span>
+                <span className="font-medium text-foreground">
+                  {currentMovie.voteAverage}
+                </span>
+              </span>
+              {currentMovie.releaseYear && (
+                <span>{currentMovie.releaseYear}</span>
+              )}
+            </div>
+
+            {/* Overview */}
+            <p
+              key={`overview-${currentMovie.id}`}
+              className={cn(
+                "text-sm md:text-base text-muted-foreground line-clamp-3 max-w-xl",
+                "animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150",
+              )}
+            >
+              {currentMovie.overview}
+            </p>
+
+            {/* Action Buttons */}
+            <div
+              key={`actions-${currentMovie.id}`}
+              className={cn(
+                "flex items-center gap-3 pt-2",
+                "animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200",
+              )}
+            >
+              <Link
+                href={`/movies/${currentMovie.id}`}
+                className={cn(
+                  "inline-flex items-center justify-center gap-2 rounded-full px-6 h-8",
+                  "bg-primary text-primary-foreground hover:bg-primary/80",
+                  "text-xs/relaxed font-medium transition-all",
                 )}
-                {currentMovie.release_date && (
-                  <span>{new Date(currentMovie.release_date).getFullYear()}</span>
+              >
+                <HugeiconsIcon icon={PlayIcon} className="size-4" />
+                Watch Now
+              </Link>
+              <Link
+                href={`/movies/${currentMovie.id}`}
+                className={cn(
+                  "inline-flex items-center justify-center gap-2 rounded-full px-6 h-8",
+                  "border border-border bg-background/50 backdrop-blur-sm",
+                  "hover:bg-input/50 hover:text-foreground",
+                  "text-xs/relaxed font-medium transition-all",
                 )}
-              </div>
+              >
+                <HugeiconsIcon
+                  icon={InformationCircleIcon}
+                  className="size-4"
+                />
+                More Info
+              </Link>
+            </div>
 
-              {/* Overview */}
-              <p className="text-base md:text-lg text-white/70 mb-8 line-clamp-3 max-w-xl">
-                {currentMovie.overview}
-              </p>
-
-              {/* Actions */}
-              <div className="flex items-center gap-4">
-                <Link href={`/movies/${currentMovie.id}`}>
-                  <Button
-                    size="lg"
-                    className="gap-2 bg-white text-black hover:bg-white/90 rounded-full px-8"
-                  >
-                    <HugeiconsIcon icon={PlayIcon} strokeWidth={2} />
-                    Play
-                  </Button>
-                </Link>
-                <Link href={`/movies/${currentMovie.id}`}>
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className="gap-2 bg-white/10 text-white border-white/20 hover:bg-white/20 rounded-full px-8 backdrop-blur-sm"
-                  >
-                    <HugeiconsIcon icon={InformationCircleIcon} strokeWidth={2} />
-                    More Info
-                  </Button>
-                </Link>
-              </div>
-            </motion.div>
-          </AnimatePresence>
-
-          {/* Navigation Arrows */}
-          <div className="absolute right-4 md:right-8 bottom-16 md:bottom-24 flex items-center gap-2">
-            <button
-              onClick={() => paginate(-1)}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm transition-colors"
-              aria-label="Previous slide"
+            {/* Pagination Dots */}
+            <div
+              className="flex items-center gap-2 pt-8"
+              role="tablist"
+              aria-label="Carousel navigation"
             >
-              <HugeiconsIcon icon={ArrowLeft01Icon} strokeWidth={2} />
-            </button>
-            <button
-              onClick={() => paginate(1)}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm transition-colors"
-              aria-label="Next slide"
-            >
-              <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={2} />
-            </button>
-          </div>
-
-          {/* Pagination Dots */}
-          <div className="flex items-center gap-2 mt-8">
-            {movies.slice(0, 8).map((_, index) => (
-              <button
-                key={index}
-                onClick={() => {
-                  setDirection(index > currentIndex ? 1 : -1);
-                  setCurrentIndex(index);
-                }}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  index === currentIndex
-                    ? "w-6 bg-white"
-                    : "w-1.5 bg-white/40 hover:bg-white/60"
-                }`}
-                aria-label={`Go to slide ${index + 1}`}
-              />
-            ))}
+              {movies.map((movie, index) => (
+                <button
+                  key={movie.id}
+                  onClick={() => goToSlide(index)}
+                  className={cn(
+                    "h-1.5 rounded-full transition-all duration-300",
+                    index === currentIndex
+                      ? "w-8 bg-primary"
+                      : "w-1.5 bg-muted-foreground/50 hover:bg-muted-foreground",
+                  )}
+                  role="tab"
+                  aria-selected={index === currentIndex}
+                  aria-label={`Go to slide ${index + 1}: ${movie.title}`}
+                />
+              ))}
+            </div>
           </div>
         </div>
+      </div>
+
+      {/* Navigation Arrows */}
+      <div className="absolute right-4 md:right-8 bottom-16 md:bottom-24 z-20 flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={goToPrevious}
+          disabled={isTransitioning}
+          className="rounded-full bg-background/50 backdrop-blur-sm hover:bg-background/80"
+          aria-label="Previous slide"
+        >
+          <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={goToNext}
+          disabled={isTransitioning}
+          className="rounded-full bg-background/50 backdrop-blur-sm hover:bg-background/80"
+          aria-label="Next slide"
+        >
+          <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
+        </Button>
       </div>
     </section>
   );
