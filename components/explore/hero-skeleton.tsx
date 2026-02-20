@@ -2,13 +2,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function HeroSkeleton() {
   return (
-    <section className="relative w-full h-[70vh] min-h-125 max-h-225 overflow-hidden">
+    <section className="relative w-full h-[90vh] sm:h-[70vh] sm:min-h-225 max-h-300 overflow-hidden">
       {/* Background Skeleton */}
       <div className="absolute inset-0">
         <Skeleton className="w-full h-full" />
         {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-background via-background/40 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-r from-background/80 via-transparent to-transparent" />
       </div>
 
       {/* Content Skeleton */}

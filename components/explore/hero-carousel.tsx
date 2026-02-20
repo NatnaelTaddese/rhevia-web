@@ -111,7 +111,7 @@ export function HeroCarousel({
 
   return (
     <section
-      className="relative w-full h-[70vh] min-h-225 max-h-300 overflow-hidden"
+      className="relative w-full h-[90vh] sm:h-[70vh] sm:min-h-225 max-h-300 overflow-hidden"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       aria-roledescription="carousel"
@@ -187,7 +187,7 @@ export function HeroCarousel({
             {/* Overview */}
             <p
               key={`overview-${currentMovie.id}`}
-              className="text-sm md:text-base text-muted-foreground line-clamp-3 max-w-xl"
+              className="font-sf-pro text-sm md:text-base text-muted-foreground line-clamp-3 max-w-xl"
             >
               {currentMovie.overview}
             </p>
@@ -195,7 +195,7 @@ export function HeroCarousel({
             {/* Action Buttons - Dynamic Island Style */}
             <div
               key={`actions-${currentMovie.id}`}
-              className="flex h-11 items-center gap-0.5 rounded-full bg-black/80 px-1 backdrop-blur-xl shadow-xl ring-2 ring-white/10 w-fit pt-0 mt-2"
+              className="font-sf-pro flex h-11 items-center gap-0.5 rounded-full bg-black/80 px-1 backdrop-blur-xl shadow-xl ring-2 ring-white/10 w-fit pt-0 mt-2"
             >
               <Link
                 href={`/movies/${currentMovie.id}`}
