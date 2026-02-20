@@ -11,7 +11,6 @@ import {
   ArrowRight01Icon,
 } from "@hugeicons/core-free-icons";
 
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { HeroMovie } from "@/lib/explore-data";
 
@@ -22,7 +21,7 @@ interface HeroCarouselProps {
 
 export function HeroCarousel({
   movies,
-  autoPlayInterval = 8000,
+  autoPlayInterval = 10000,
 }: HeroCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -112,7 +111,7 @@ export function HeroCarousel({
 
   return (
     <section
-      className="relative w-full h-[70vh] min-h-125 max-h-225 overflow-hidden"
+      className="relative w-full h-[70vh] min-h-225 max-h-300 overflow-hidden"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       aria-roledescription="carousel"
@@ -137,8 +136,8 @@ export function HeroCarousel({
             sizes="100vw"
           />
           {/* Gradient Overlays */}
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-background via-background/40 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-r from-background/80 via-transparent to-transparent" />
         </div>
       ))}
 
@@ -146,24 +145,33 @@ export function HeroCarousel({
       <div className="absolute inset-0 z-20 flex items-end">
         <div className="container mx-auto px-4 pb-16 md:pb-24">
           <div className="max-w-2xl space-y-4">
-            {/* Title with animation */}
-            <h1
+            {/* Logo or Title with animation */}
+            <div
               key={currentMovie.id}
               className={cn(
-                "text-4xl md:text-5xl lg:text-6xl font-bold text-foreground",
                 "animate-in fade-in slide-in-from-bottom-4 duration-500",
               )}
             >
-              {currentMovie.title}
-            </h1>
+              {currentMovie.logoUrl ? (
+                <Image
+                  src={currentMovie.logoUrl}
+                  alt={currentMovie.title}
+                  width={400}
+                  height={200}
+                  className="max-w-[300px] md:max-w-[400px] lg:max-w-[500px] h-auto object-contain drop-shadow-lg"
+                  priority
+                />
+              ) : (
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground">
+                  {currentMovie.title}
+                </h1>
+              )}
+            </div>
 
             {/* Meta Info */}
             <div
               key={`meta-${currentMovie.id}`}
-              className={cn(
-                "flex items-center gap-4 text-sm text-muted-foreground",
-                "animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100",
-              )}
+              className="flex items-center gap-4 text-sm text-muted-foreground"
             >
               <span className="flex items-center gap-1.5">
                 <span className="text-yellow-500">★</span>
@@ -179,53 +187,51 @@ export function HeroCarousel({
             {/* Overview */}
             <p
               key={`overview-${currentMovie.id}`}
-              className={cn(
-                "text-sm md:text-base text-muted-foreground line-clamp-3 max-w-xl",
-                "animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150",
-              )}
+              className="text-sm md:text-base text-muted-foreground line-clamp-3 max-w-xl"
             >
               {currentMovie.overview}
             </p>
 
-            {/* Action Buttons */}
+            {/* Action Buttons - Dynamic Island Style */}
             <div
               key={`actions-${currentMovie.id}`}
-              className={cn(
-                "flex items-center gap-3 pt-2",
-                "animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200",
-              )}
+              className="flex h-11 items-center gap-0.5 rounded-full bg-black/80 px-1 backdrop-blur-xl shadow-xl ring-2 ring-white/10 w-fit pt-0 mt-2"
             >
               <Link
                 href={`/movies/${currentMovie.id}`}
                 className={cn(
-                  "inline-flex items-center justify-center gap-2 rounded-full px-6 h-8",
-                  "bg-primary text-primary-foreground hover:bg-primary/80",
-                  "text-xs/relaxed font-medium transition-all",
+                  "flex h-9 items-center gap-2 rounded-full px-4",
+                  "bg-white text-black hover:bg-white/90",
+                  "text-sm font-medium transition-all duration-200",
                 )}
               >
-                <HugeiconsIcon icon={PlayIcon} className="size-4" />
+                <HugeiconsIcon
+                  icon={PlayIcon}
+                  strokeWidth={3}
+                  className="size-4"
+                />
                 Watch Now
               </Link>
               <Link
                 href={`/movies/${currentMovie.id}`}
                 className={cn(
-                  "inline-flex items-center justify-center gap-2 rounded-full px-6 h-8",
-                  "border border-border bg-background/50 backdrop-blur-sm",
-                  "hover:bg-input/50 hover:text-foreground",
-                  "text-xs/relaxed font-medium transition-all",
+                  "flex h-9 items-center gap-2 rounded-full px-4",
+                  "text-white/60 hover:text-white hover:bg-white/10",
+                  "text-sm font-medium transition-all duration-200",
                 )}
               >
                 <HugeiconsIcon
                   icon={InformationCircleIcon}
+                  strokeWidth={3}
                   className="size-4"
                 />
                 More Info
               </Link>
             </div>
 
-            {/* Pagination Dots */}
+            {/* Pagination Dots - Dynamic Island Style */}
             <div
-              className="flex items-center gap-2 pt-8"
+              className="flex h-11 items-center gap-2 rounded-full bg-black/80 px-4 backdrop-blur-xl shadow-xl ring-2 ring-white/10 w-fit pt-0 mt-8"
               role="tablist"
               aria-label="Carousel navigation"
             >
@@ -234,10 +240,10 @@ export function HeroCarousel({
                   key={movie.id}
                   onClick={() => goToSlide(index)}
                   className={cn(
-                    "h-1.5 rounded-full transition-all duration-300",
+                    "h-2 rounded-full transition-all duration-300",
                     index === currentIndex
-                      ? "w-8 bg-primary"
-                      : "w-1.5 bg-muted-foreground/50 hover:bg-muted-foreground",
+                      ? "w-6 bg-white"
+                      : "w-2 bg-white/30 hover:bg-white/50",
                   )}
                   role="tab"
                   aria-selected={index === currentIndex}
@@ -249,28 +255,40 @@ export function HeroCarousel({
         </div>
       </div>
 
-      {/* Navigation Arrows */}
-      <div className="absolute right-4 md:right-8 bottom-16 md:bottom-24 z-20 flex items-center gap-2">
-        <Button
-          variant="outline"
-          size="icon"
+      {/* Navigation Arrows - Dynamic Island Style */}
+      <div className="absolute right-4 md:right-8 bottom-16 md:bottom-24 z-20 flex h-11 items-center gap-0.5 rounded-full bg-black/80 px-1 backdrop-blur-xl shadow-xl ring-2 ring-white/10">
+        <button
           onClick={goToPrevious}
           disabled={isTransitioning}
-          className="rounded-full bg-background/50 backdrop-blur-sm hover:bg-background/80"
+          className={cn(
+            "flex size-9 items-center justify-center rounded-full transition-all duration-200",
+            "text-white/60 hover:bg-white/10 hover:text-white",
+            "disabled:opacity-50 disabled:pointer-events-none",
+          )}
           aria-label="Previous slide"
         >
-          <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
+          <HugeiconsIcon
+            icon={ArrowLeft01Icon}
+            strokeWidth={3}
+            className="size-4"
+          />
+        </button>
+        <button
           onClick={goToNext}
           disabled={isTransitioning}
-          className="rounded-full bg-background/50 backdrop-blur-sm hover:bg-background/80"
+          className={cn(
+            "flex size-9 items-center justify-center rounded-full transition-all duration-200",
+            "text-white/60 hover:bg-white/10 hover:text-white",
+            "disabled:opacity-50 disabled:pointer-events-none",
+          )}
           aria-label="Next slide"
         >
-          <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
-        </Button>
+          <HugeiconsIcon
+            icon={ArrowRight01Icon}
+            strokeWidth={3}
+            className="size-4"
+          />
+        </button>
       </div>
     </section>
   );

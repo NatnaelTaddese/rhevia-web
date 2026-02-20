@@ -1,0 +1,26 @@
+FROM oven/bun:1-alpine
+
+WORKDIR /app
+
+# Install curl for healthchecks
+RUN apk add --no-cache curl
+
+# Copy package files first for better caching
+COPY package.json bun.lock* ./
+
+# Install dependencies
+RUN bun install --frozen-lockfile
+
+# Copy the rest of the application
+COPY . .
+
+# Expose the development port
+EXPOSE 3001
+
+# Set environment variables
+ENV NODE_ENV=development
+ENV PORT=3001
+ENV HOSTNAME=0.0.0.0
+
+# Start the development server on port 3001
+CMD ["bun", "run", "dev", "--port", "3001"]

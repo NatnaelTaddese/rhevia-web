@@ -5,6 +5,9 @@
   "scripts": {
     "types:fetch": "bun --preload dotenv/config scripts/fetch-types.ts",
     "dev": "bun run types:fetch && next dev",
+    "dev:docker": "docker compose -f docker-compose.dev.yml up --build",
+    "dev:docker:down": "docker compose -f docker-compose.dev.yml down",
+    "dev:docker:clean": "docker compose -f docker-compose.dev.yml down -v --rmi local",
     "build": "next build",
     "start": "bun run types:fetch && next start",
     "lint": "eslint"

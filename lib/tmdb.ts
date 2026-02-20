@@ -41,6 +41,23 @@ export interface TMDBMovie {
   video: boolean;
 }
 
+export interface TMDBImage {
+  aspect_ratio: number;
+  height: number;
+  iso_639_1: string | null;
+  file_path: string;
+  vote_average: number;
+  vote_count: number;
+  width: number;
+}
+
+export interface TMDBImagesResponse {
+  id: number;
+  backdrops: TMDBImage[];
+  logos: TMDBImage[];
+  posters: TMDBImage[];
+}
+
 export interface TMDBTVShow {
   id: number;
   name: string;
@@ -99,6 +116,14 @@ export function getPosterUrl(
   size: keyof typeof TMDB_IMAGE_SIZES.poster = "medium",
 ): string | null {
   return getImageUrl(path, "poster", size);
+}
+
+export function getLogoUrl(
+  path: string | null,
+  size: "w185" | "w300" | "w500" | "original" = "w500",
+): string | null {
+  if (!path) return null;
+  return `${TMDB_IMAGE_BASE_URL}/${size}${path}`;
 }
 
 // API client
@@ -235,6 +260,25 @@ class TMDBClient {
   async getUpcomingMovies(page = 1): Promise<TMDBPaginatedResponse<TMDBMovie>> {
     return this.fetch<TMDBPaginatedResponse<TMDBMovie>>("/movie/upcoming", {
       page: page.toString(),
+    });
+  }
+
+  // Images (logos, backdrops, posters)
+  async getMovieImages(
+    movieId: number,
+    includeLanguages = "en,null",
+  ): Promise<TMDBImagesResponse> {
+    return this.fetch<TMDBImagesResponse>(`/movie/${movieId}/images`, {
+      include_image_language: includeLanguages,
+    });
+  }
+
+  async getTVImages(
+    tvId: number,
+    includeLanguages = "en,null",
+  ): Promise<TMDBImagesResponse> {
+    return this.fetch<TMDBImagesResponse>(`/tv/${tvId}/images`, {
+      include_image_language: includeLanguages,
     });
   }
 
