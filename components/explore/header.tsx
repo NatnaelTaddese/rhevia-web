@@ -51,7 +51,7 @@ export function Header() {
     <header className="fixed left-1/2 top-4 z-50 -translate-x-1/2">
       <div className="flex items-center gap-3">
         {/* Left: Navigation - Dynamic Island Style */}
-        <nav className="flex h-11 items-center gap-0.5 rounded-full bg-black/80 px-1 backdrop-blur-xl shadow-xl ring-2 ring-white/10">
+        <nav className="flex h-11 items-center gap-0.5 rounded-full bg-black/80 px-1 backdrop-blur-xl shadow-xl ring-2 ring-white/10 font-sf-pro">
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
             return (
