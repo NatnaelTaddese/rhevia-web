@@ -14,7 +14,7 @@ async function HeroSection() {
     return (
       <section className="relative w-full h-[70vh] min-h-125 max-h-225 overflow-hidden">
         <div className="absolute inset-0 bg-muted" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-background via-background/40 to-transparent" />
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center space-y-4">
             <h2 className="text-2xl font-semibold text-muted-foreground">
