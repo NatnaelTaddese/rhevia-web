@@ -158,7 +158,7 @@ export function HeroCarousel({
                   alt={currentMovie.title}
                   width={400}
                   height={200}
-                  className="max-w-[300px] md:max-w-[400px] lg:max-w-[500px] h-auto object-contain drop-shadow-lg"
+                  className="max-w-75 md:max-w-100 lg:max-w-125 max-h-40 md:max-h-50 h-auto object-contain object-left drop-shadow-lg"
                   priority
                 />
               ) : (
@@ -173,7 +173,7 @@ export function HeroCarousel({
               key={`meta-${currentMovie.id}`}
               className="flex items-center gap-4 text-sm text-muted-foreground"
             >
-              <span className="flex items-center gap-1.5">
+              <span className="flex items-center gap-1.5 justify-center">
                 <span className="text-yellow-500">★</span>
                 <span className="font-medium text-foreground">
                   {currentMovie.voteAverage}
@@ -240,7 +240,7 @@ export function HeroCarousel({
                   key={movie.id}
                   onClick={() => goToSlide(index)}
                   className={cn(
-                    "h-2 rounded-full transition-all duration-300",
+                    "h-2 rounded-full transition-all duration-300 cursor-pointer",
                     index === currentIndex
                       ? "w-6 bg-white"
                       : "w-2 bg-white/30 hover:bg-white/50",
@@ -261,7 +261,7 @@ export function HeroCarousel({
           onClick={goToPrevious}
           disabled={isTransitioning}
           className={cn(
-            "flex size-9 items-center justify-center rounded-full transition-all duration-200",
+            "flex size-9 items-center justify-center rounded-full transition-all duration-200 cursor-pointer",
             "text-white/60 hover:bg-white/10 hover:text-white",
             "disabled:opacity-50 disabled:pointer-events-none",
           )}
