@@ -77,38 +77,46 @@ export interface TMDBGenresResponse {
 export function getImageUrl(
   path: string | null,
   type: keyof typeof TMDB_IMAGE_SIZES,
-  size: keyof (typeof TMDB_IMAGE_SIZES)[typeof type]
+  size: keyof (typeof TMDB_IMAGE_SIZES)[typeof type],
 ): string | null {
   if (!path) return null;
-  const sizeValue = TMDB_IMAGE_SIZES[type][size as keyof (typeof TMDB_IMAGE_SIZES)[typeof type]];
+  const sizeValue =
+    TMDB_IMAGE_SIZES[type][
+      size as keyof (typeof TMDB_IMAGE_SIZES)[typeof type]
+    ];
   return `${TMDB_IMAGE_BASE_URL}/${sizeValue}${path}`;
 }
 
 export function getBackdropUrl(
   path: string | null,
-  size: keyof typeof TMDB_IMAGE_SIZES.backdrop = "large"
+  size: keyof typeof TMDB_IMAGE_SIZES.backdrop = "large",
 ): string | null {
   return getImageUrl(path, "backdrop", size);
 }
 
 export function getPosterUrl(
   path: string | null,
-  size: keyof typeof TMDB_IMAGE_SIZES.poster = "medium"
+  size: keyof typeof TMDB_IMAGE_SIZES.poster = "medium",
 ): string | null {
   return getImageUrl(path, "poster", size);
 }
 
 // API client
 class TMDBClient {
-  private apiKey: string;
-  private accessToken: string;
-
-  constructor() {
-    this.apiKey = process.env.NEXT_PUBLIC_TMDB_API_KEY as string;
-    this.accessToken = process.env.NEXT_PUBLIC_TMDB_API_READ_ACCESS_TOKEN as string;
+  private get accessToken(): string {
+    const token = process.env.NEXT_PUBLIC_TMDB_API_READ_ACCESS_TOKEN;
+    if (!token) {
+      throw new Error(
+        "TMDB API access token is not configured. Please set NEXT_PUBLIC_TMDB_API_READ_ACCESS_TOKEN in your .env file.",
+      );
+    }
+    return token;
   }
 
-  private async fetch<T>(endpoint: string, params: Record<string, string> = {}): Promise<T> {
+  private async fetch<T>(
+    endpoint: string,
+    params: Record<string, string> = {},
+  ): Promise<T> {
     const url = new URL(`${TMDB_API_BASE_URL}${endpoint}`);
 
     // Add query params
@@ -116,41 +124,63 @@ class TMDBClient {
       url.searchParams.append(key, value);
     });
 
-    const response = await fetch(url.toString(), {
-      headers: {
-        Authorization: `Bearer ${this.accessToken}`,
-        "Content-Type": "application/json",
-      },
-      next: {
-        revalidate: 3600, // Cache for 1 hour
-      },
-    });
+    // Create AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
-    if (!response.ok) {
-      throw new Error(`TMDB API error: ${response.status} ${response.statusText}`);
+    try {
+      const response = await fetch(url.toString(), {
+        headers: {
+          Authorization: `Bearer ${this.accessToken}`,
+          "Content-Type": "application/json",
+        },
+        signal: controller.signal,
+        next: {
+          revalidate: 3600, // Cache for 1 hour
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `TMDB API error: ${response.status} ${response.statusText}`,
+        );
+      }
+
+      return response.json() as Promise<T>;
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.name === "AbortError") {
+          throw new Error(
+            `TMDB API request timed out after 10 seconds. Please check your network connection.`,
+          );
+        }
+        // Re-throw with more context
+        throw new Error(`TMDB API request failed: ${error.message}`);
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
     }
-
-    return response.json() as Promise<T>;
   }
 
   // Trending
   async getTrendingMovies(
     timeWindow: "day" | "week" = "week",
-    page = 1
+    page = 1,
   ): Promise<TMDBPaginatedResponse<TMDBMovie>> {
     return this.fetch<TMDBPaginatedResponse<TMDBMovie>>(
       `/trending/movie/${timeWindow}`,
-      { page: page.toString() }
+      { page: page.toString() },
     );
   }
 
   async getTrendingTVShows(
     timeWindow: "day" | "week" = "week",
-    page = 1
+    page = 1,
   ): Promise<TMDBPaginatedResponse<TMDBTVShow>> {
     return this.fetch<TMDBPaginatedResponse<TMDBTVShow>>(
       `/trending/tv/${timeWindow}`,
-      { page: page.toString() }
+      { page: page.toString() },
     );
   }
 
@@ -161,20 +191,26 @@ class TMDBClient {
     });
   }
 
-  async getPopularTVShows(page = 1): Promise<TMDBPaginatedResponse<TMDBTVShow>> {
+  async getPopularTVShows(
+    page = 1,
+  ): Promise<TMDBPaginatedResponse<TMDBTVShow>> {
     return this.fetch<TMDBPaginatedResponse<TMDBTVShow>>("/tv/popular", {
       page: page.toString(),
     });
   }
 
   // Now Playing / On The Air
-  async getNowPlayingMovies(page = 1): Promise<TMDBPaginatedResponse<TMDBMovie>> {
+  async getNowPlayingMovies(
+    page = 1,
+  ): Promise<TMDBPaginatedResponse<TMDBMovie>> {
     return this.fetch<TMDBPaginatedResponse<TMDBMovie>>("/movie/now_playing", {
       page: page.toString(),
     });
   }
 
-  async getOnTheAirTVShows(page = 1): Promise<TMDBPaginatedResponse<TMDBTVShow>> {
+  async getOnTheAirTVShows(
+    page = 1,
+  ): Promise<TMDBPaginatedResponse<TMDBTVShow>> {
     return this.fetch<TMDBPaginatedResponse<TMDBTVShow>>("/tv/on_the_air", {
       page: page.toString(),
     });
@@ -187,7 +223,9 @@ class TMDBClient {
     });
   }
 
-  async getTopRatedTVShows(page = 1): Promise<TMDBPaginatedResponse<TMDBTVShow>> {
+  async getTopRatedTVShows(
+    page = 1,
+  ): Promise<TMDBPaginatedResponse<TMDBTVShow>> {
     return this.fetch<TMDBPaginatedResponse<TMDBTVShow>>("/tv/top_rated", {
       page: page.toString(),
     });
@@ -212,7 +250,7 @@ class TMDBClient {
   // Search
   async searchMovies(
     query: string,
-    page = 1
+    page = 1,
   ): Promise<TMDBPaginatedResponse<TMDBMovie>> {
     return this.fetch<TMDBPaginatedResponse<TMDBMovie>>("/search/movie", {
       query,
@@ -222,7 +260,7 @@ class TMDBClient {
 
   async searchTVShows(
     query: string,
-    page = 1
+    page = 1,
   ): Promise<TMDBPaginatedResponse<TMDBTVShow>> {
     return this.fetch<TMDBPaginatedResponse<TMDBTVShow>>("/search/tv", {
       query,
