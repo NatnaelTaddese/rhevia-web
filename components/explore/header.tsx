@@ -6,7 +6,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Home02Icon,
-  LibraryIcon,
   Film01Icon,
   Tv01Icon,
   Search01Icon,
@@ -23,7 +22,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "../ui/button";
+import { Button } from "@/components/ui/button";
 
 const navLinks = [
   { href: "/", label: "Home", icon: Home02Icon },

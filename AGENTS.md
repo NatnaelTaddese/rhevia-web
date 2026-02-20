@@ -7,160 +7,198 @@ This file contains guidelines for AI agents working on this codebase.
 - **Framework**: Next.js 16 (App Router) with React 19
 - **Language**: TypeScript 5 with strict mode
 - **Styling**: Tailwind CSS v4, shadcn/ui (base-mira style)
-- **Icons**: Hugeicons
+- **Icons**: Hugeicons (`@hugeicons/react` with `@hugeicons/core-free-icons`)
 - **Package Manager**: Bun
 
 ## Build Commands
 
 ```bash
-# Development
-bun run dev              # Start dev server with type fetching
-bun run types:fetch      # Run type fetching script
-
-# Build
-bun run build            # Production build
+bun run dev              # Start dev server (runs types:fetch first)
+bun run build            # Production build (includes type checking)
 bun run start            # Start production server
-
-# Linting
 bun run lint             # Run ESLint
 bun run lint --fix       # Fix auto-fixable issues
+bun run types:fetch      # Fetch backend types from API
 ```
 
-### Type Checking
-
-TypeScript is configured with strict mode. Check types without emitting:
-```bash
-bun run build            # Full build (includes type checking)
-```
+**Note**: No test framework is currently configured.
 
 ## Code Style Guidelines
 
 ### Imports
 
-- Use `@/*` alias for root-level imports (configured in tsconfig.json)
-- Group imports: React/Next, third-party libraries, internal modules
-- Use named imports preferentially
-- Type imports should use `import type { ... }` syntax
+Use `@/*` alias for root-level imports. Group and order imports:
 
 ```typescript
-import type { Metadata } from "next";
+// 1. React/Next
 import { useState } from "react";
+import Link from "next/link";
+import type { Metadata } from "next";
+
+// 2. Third-party libraries
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Avatar } from "@/components/ui/avatar";
+import { Film01Icon, AlertCircleIcon } from "@hugeicons/core-free-icons";
+
+// 3. Internal modules (ui components first, then others)
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { signIn } from "@/lib/auth-client";
 ```
+
+- Use named imports preferentially
+- Type imports use `import type { ... }` syntax
+- Component imports follow shadcn/ui patterns
 
 ### Component Structure
 
-- Use function components with explicit return types when beneficial
-- Props interfaces should be defined inline or in the same file
-- Client components must include `"use client"` directive
-- Server components are default (no directive needed)
-
 ```typescript
-"use client";
+"use client";  // Only for client components
+
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface Props {
+  className?: string;
   children: React.ReactNode;
 }
 
-export function Component({ children }: Props) {
-  return <div>{children}</div>;
+export function Component({ className, children }: Props) {
+  const [state, setState] = useState(false);
+
+  return (
+    <div className={cn("flex items-center gap-2", className)}>
+      {children}
+    </div>
+  );
 }
 ```
 
+- Server components are default (no directive)
+- Props interfaces defined inline in the same file
+- Destructure props in function signature
+- Use `React.ComponentProps<"element">` for extending native elements
+
 ### Naming Conventions
 
-- **Components**: PascalCase (e.g., `UserProfile.tsx`)
-- **Hooks**: camelCase starting with `use` (e.g., `useAuth.ts`)
-- **Utils**: camelCase (e.g., `formatDate.ts`)
-- **Types/Interfaces**: PascalCase (e.g., `UserSession`)
-- **Constants**: UPPER_SNAKE_CASE for true constants
-- **Files**: Use kebab-case for non-component files
+| Type | Convention | Example |
+|------|------------|---------|
+| Components | PascalCase | `UserProfile.tsx` |
+| Hooks | camelCase with `use` | `useAuth.ts` |
+| Utilities | camelCase | `formatDate.ts` |
+| Types/Interfaces | PascalCase | `UserSession` |
+| Constants | UPPER_SNAKE_CASE | `API_BASE_URL` |
+| Non-component files | kebab-case | `auth-client.ts` |
 
 ### Styling
 
 - Use Tailwind CSS utility classes exclusively
-- Use the `cn()` utility from `@/lib/utils` for conditional classes
-- Prefer semantic color tokens (`bg-background`, `text-foreground`)
-- Use `size-*` utility instead of `w-* h-*` for square elements
-- Dark mode is supported via `dark:` variant
+- Use `cn()` from `@/lib/utils` for conditional class merging
+- Prefer semantic color tokens: `bg-background`, `text-foreground`, `bg-primary`
+- Use `size-*` for square elements instead of `w-* h-*`
+- Dark mode via `dark:` variant (enabled by default)
 
 ```tsx
-<div className={cn("flex items-center gap-2", isActive && "bg-primary")}>
+<div className={cn(
+  "flex items-center gap-2 rounded-md px-2",
+  isActive && "bg-primary text-primary-foreground",
+  className
+)}>
 ```
 
 ### TypeScript
 
-- Enable strict mode - avoid implicit `any` types
-- Use explicit return types for exported functions
-- Define interfaces for component props and API responses
+- Strict mode enabled - no implicit `any`
 - Use `type` for unions, `interface` for object shapes
+- Use `import type` for type-only imports
+- Environment variables: `process.env.VARIABLE_NAME as string` with non-null assertion
 
 ### Error Handling
 
 - Use try-catch for async operations
 - Log errors with context: `console.error("Action failed:", error)`
-- Use Next.js error boundaries for component errors
+- Use Next.js error boundaries for component-level errors
+- Display user-friendly error messages via state
 
 ### shadcn/ui Components
 
 - Located in `components/ui/`
-- Import from `@/components/ui/component-name`
-- Use Hugeicons for icons (configured in components.json)
-- Follow the base-mira design system
+- Import: `import { Component } from "@/components/ui/component-name"`
+- Icons use Hugeicons pattern:
 
-### Project Structure
+```tsx
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Film01Icon } from "@hugeicons/core-free-icons";
 
-```
-app/              # Next.js App Router pages
-  (explore)/      # Route groups
-  (auth)/
-  (media)/
-components/       # React components
-  ui/             # shadcn/ui components
-  auth/           # Auth-related components
-  explore/        # Explore page components
-  player/         # Media player components
-lib/              # Utility functions and clients
-  auth-client.ts  # Better Auth client
-  eden.ts         # Elysia Eden client
-  utils.ts        # General utilities
-public/           # Static assets
-types/            # Type definitions
-typescripts/      # TypeScript configuration
+<HugeiconsIcon icon={Film01Icon} strokeWidth={2} className="size-6" />
 ```
 
-### Route Groups
+## Project Structure
 
-- Use route groups `(group-name)` for layout organization
-- Group names don't affect URL structure
-- Current groups: `(auth)`, `(explore)`, `(media)`
+```
+app/                    # Next.js App Router pages
+  (auth)/               # Authentication route group
+    login/page.tsx
+    signup/page.tsx
+  (explore)/            # Explore route group
+    movies/page.tsx
+    shows/page.tsx
+  layout.tsx            # Root layout
+  globals.css           # Tailwind CSS v4 config
+components/
+  ui/                   # shadcn/ui components
+  auth/                 # Auth-related components
+  explore/              # Explore page components
+  theme-provider.tsx    # next-themes provider
+lib/
+  utils.ts              # cn() utility
+  auth-client.ts        # Better Auth client
+  eden.ts               # Elysia Eden API client
+  tmdb.ts               # TMDB integration
+types/
+  index.ts              # Type re-exports
+  server.d.ts           # Backend API types (auto-generated)
+```
 
-### API Integration
+## API Integration
 
-- Use Elysia Eden (`@/lib/eden.ts`) for type-safe API calls
-- Use Better Auth (`@/lib/auth-client.ts`) for authentication
-- Store API keys in `.env` file (never commit)
+### Backend API
 
-### Environment Variables
+```typescript
+import { api } from "@/lib/eden";
 
-- Next.js automatically loads `.env.local` and `.env` files
-- Access via `process.env.VARIABLE_NAME`
-- Add type definitions to `types/` directory for type safety
+const response = await api.endpoint.get();
+```
 
-## Testing
+Types are fetched via `bun run types:fetch` and stored in `types/server.d.ts`.
 
-**Note**: No test framework is currently configured. When adding tests:
-- Consider Vitest for unit testing
-- Use Playwright for E2E testing
-- Place test files alongside components or in `__tests__/` directories
+### Authentication
 
-## Important Notes
+```typescript
+import { signIn, signOut, useSession } from "@/lib/auth-client";
 
-- This project uses Bun as the package manager
-- TypeScript strict mode is enforced
-- Next.js 16 with React 19 features (Server Components by default)
-- Tailwind CSS v4 with new CSS-first configuration
-- Dark mode enabled by default via `next-themes`
-- Fonts: DM Sans (primary), Geist Sans, Geist Mono
+// Email sign in
+await signIn.email({ email, password, callbackURL: "/" });
+
+// Social sign in
+await signIn.social({ provider: "google", callbackURL: "/" });
+
+// Get session
+const { data: session } = useSession();
+```
+
+## Environment Variables
+
+- Stored in `.env.local` (never commit)
+- Client-side: prefix with `NEXT_PUBLIC_`
+- Access: `process.env.NEXT_PUBLIC_BACKEND_URL as string`
+- Required env vars: `NEXT_PUBLIC_BACKEND_URL`, `NEXT_PUBLIC_FRONTEND_URL`
+
+## Key Dependencies
+
+- **@base-ui/react**: Unstyled UI primitives (used by shadcn/ui)
+- **better-auth**: Authentication
+- **@elysiajs/eden**: Type-safe API client
+- **next-themes**: Dark mode support
+- **class-variance-authority**: Component variants
+- **clsx + tailwind-merge**: Class merging via `cn()`
