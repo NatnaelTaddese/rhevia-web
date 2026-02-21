@@ -1,29 +1,29 @@
 "use client";
 
-import { useEffect } from "react";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  Home02Icon,
   Film01Icon,
-  Tv01Icon,
-  Search01Icon,
+  Home02Icon,
   Logout03Icon,
+  Search01Icon,
+  Tv01Icon,
   User02Icon,
 } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
 
-import { cn } from "@/lib/utils";
-import { useSession, signOut, authClient } from "@/lib/auth-client";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
-  DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
+import { authClient, signOut, useSession } from "@/lib/auth-client";
+import { cn } from "@/lib/utils";
 
 const navLinks = [
   { href: "/", label: "Home", icon: Home02Icon },
@@ -98,14 +98,14 @@ export function Header() {
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  className="mx-1 flex focus:outline-none"
+                  className="mx-1 flex focus:outline-none ring-2 ring-inset ring-white/20"
                 >
                   <Avatar size="default">
                     <AvatarImage
                       src={session.user.image || undefined}
                       alt={session.user.name || session.user.email}
                     />
-                    <AvatarFallback className="bg-white/20 text-white text-xs">
+                    <AvatarFallback className="bg-white/20 text-white text-xs ring-2 ring-inset ring-white/20">
                       {session.user.name?.charAt(0).toUpperCase() ||
                         session.user.email?.charAt(0).toUpperCase() ||
                         "U"}

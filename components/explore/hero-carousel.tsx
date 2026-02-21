@@ -1,18 +1,18 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  PlayIcon,
-  InformationCircleIcon,
   ArrowLeft01Icon,
   ArrowRight01Icon,
+  InformationCircleIcon,
+  PlayIcon,
 } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import Image from "next/image";
+import Link from "next/link";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import { cn } from "@/lib/utils";
 import type { HeroMovie } from "@/lib/explore-data";
+import { cn } from "@/lib/utils";
 
 interface HeroCarouselProps {
   movies: HeroMovie[];
