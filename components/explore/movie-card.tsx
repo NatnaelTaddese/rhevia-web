@@ -21,11 +21,14 @@ export function MovieCard({ movie, className }: MovieCardProps) {
   return (
     <Link
       href={`/movies/${movie.id}`}
-      className={cn("group relative block shrink-0", className)}
+      className={cn(
+        "group relative block shrink-0 hover:scale-110 transition-all delay-150 ease-in",
+        className,
+      )}
     >
       <div
         className={cn(
-          "relative aspect-[2/3] w-36 sm:w-40 overflow-hidden rounded-2xl",
+          "relative aspect-2/3 w-36 sm:w-40 overflow-hidden rounded-2xl",
           "bg-black/80 backdrop-blur-xl shadow-xl ring-2 ring-white/10",
           "transition-all duration-300 ease-out",
           "group-hover:ring-white/20",

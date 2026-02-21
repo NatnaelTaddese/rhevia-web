@@ -21,6 +21,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 
@@ -80,7 +81,7 @@ export function Header() {
         {/* Right: Search + User - Dynamic Island Style */}
         <div className="flex h-11 items-center gap-0.5 rounded-full bg-black/90 px-1 backdrop-blur-xl shadow-xl ring-2 ring-white/10">
           {/* Search Button */}
-          <Button className="flex ml-1 size-8  ring-white/10 items-center justify-center rounded-full bg-transparent text-white/60 cursor-pointer transition-all duration-200 hover:ring-2  hover:bg-white/10 hover:text-white">
+          <Button className="flex ml-1 size-8 items-center justify-center rounded-full bg-transparent text-white/60 cursor-pointer transition-all duration-200 hover:bg-white/10 hover:text-white">
             <HugeiconsIcon
               icon={Search01Icon}
               strokeWidth={3}
@@ -115,18 +116,15 @@ export function Header() {
 
               {/*Dropdown Menu*/}
               {session?.user?.isAnonymous ? (
-                <DropdownMenuContent
-                  align="end"
-                  className="mt-4 w-56 rounded-2xl bg-black/80 p-3 backdrop-blur-xl shadow-xl ring-2 ring-white/10"
-                >
-                  <div className="px-2 py-1.5">
+                <DropdownMenuContent align="end" className="mt-4 w-56">
+                  <div className="px-3 py-2">
                     <p className="text-sm font-medium">{session.user.name}</p>
                     <p className="text-xs text-white/60">
                       login to track your progress
                     </p>
                   </div>
 
-                  <DropdownMenuItem className="rounded-2xl">
+                  <DropdownMenuItem>
                     <Link
                       href="/login"
                       className="flex w-full h-full items-center gap-2"
@@ -137,33 +135,28 @@ export function Header() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               ) : (
-                <DropdownMenuContent
-                  align="end"
-                  className="mt-4 w-56 rounded-2xl bg-black/80 p-3 backdrop-blur-xl shadow-xl ring-2 ring-white/10"
-                >
-                  <div className="px-2 py-1.5">
-                    <p className="text-xs font-medium">{session.user.name}</p>
-                    <p className="text-[0.625rem] text-white/60">
+                <DropdownMenuContent align="end" className="mt-4 w-56">
+                  <div className="px-3 py-2">
+                    <p className="text-sm font-medium">{session.user.name}</p>
+                    <p className="text-xs text-white/60">
                       {session.user.email}
                     </p>
                   </div>
-                  <div className="h-px bg-white/10 my-1" />
+                  <DropdownMenuSeparator />
 
-                  <DropdownMenuItem className="rounded-2xl">
+                  <DropdownMenuItem>
                     <Link
                       href="/profile"
-                      className="flex w-full items-center gap-2 "
+                      className="flex w-full items-center gap-2"
                     >
                       <HugeiconsIcon icon={User02Icon} strokeWidth={2} />
                       <span>Profile</span>
                     </Link>
-                    <div className="h-px bg-white/10 my-1" />
                   </DropdownMenuItem>
 
                   <DropdownMenuItem
                     onClick={handleSignOut}
                     variant="destructive"
-                    className="rounded-2xl"
                   >
                     <HugeiconsIcon icon={Logout03Icon} strokeWidth={2} />
                     <span>Sign out</span>
