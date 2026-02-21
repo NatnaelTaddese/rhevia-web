@@ -95,7 +95,11 @@ export function Header() {
           ) : (
             <DropdownMenu>
               <DropdownMenuTrigger>
-                <Button variant="ghost" size="icon-sm" className="mx-1 focus:outline-none">
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="mx-1 flex focus:outline-none"
+                >
                   <Avatar size="default">
                     <AvatarImage
                       src={session.user.image || undefined}
