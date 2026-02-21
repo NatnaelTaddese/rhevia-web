@@ -158,7 +158,7 @@ export function HeroCarousel({
                   alt={currentMovie.title}
                   width={400}
                   height={200}
-                  className="max-w-75 md:max-w-100 lg:max-w-125 max-h-40 md:max-h-50 h-auto object-contain object-left drop-shadow-lg"
+                  className="max-w-75 md:max-w-100 lg:max-w-125 max-h-40 md:max-h-50 h-auto object-contain object-left drop-shadow-lg select-none"
                   priority
                 />
               ) : (
@@ -171,7 +171,7 @@ export function HeroCarousel({
             {/* Meta Info */}
             <div
               key={`meta-${currentMovie.id}`}
-              className="flex items-center gap-4 text-sm text-muted-foreground"
+              className="flex items-center gap-4 text-sm text-muted-foreground select-none"
             >
               <span className="flex items-center gap-1.5 justify-center">
                 <span className="text-yellow-500">★</span>
@@ -195,7 +195,7 @@ export function HeroCarousel({
             {/* Action Buttons - Dynamic Island Style */}
             <div
               key={`actions-${currentMovie.id}`}
-              className="font-sf-pro flex h-11 items-center gap-0.5 rounded-full bg-black/80 px-1 backdrop-blur-xl shadow-xl ring-2 ring-white/10 w-fit pt-0 mt-2"
+              className="font-sf-pro flex h-11 items-center gap-0.5 rounded-full bg-black/80 px-1 backdrop-blur-xl shadow-xl ring-2 ring-white/10 w-fit pt-0 mt-2 select-none"
             >
               <Link
                 href={`/movies/${currentMovie.id}`}
@@ -240,7 +240,7 @@ export function HeroCarousel({
                   key={movie.id}
                   onClick={() => goToSlide(index)}
                   className={cn(
-                    "h-2 rounded-full transition-all duration-300 cursor-pointer",
+                    "h-2 rounded-full transition-all duration-300 cursor-pointer hover:scale-130",
                     index === currentIndex
                       ? "w-6 bg-white"
                       : "w-2 bg-white/30 hover:bg-white/50",
