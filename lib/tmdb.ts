@@ -87,6 +87,76 @@ export interface TMDBTVShowDetails {
   popularity: number;
 }
 
+export interface TMDBMovieDetails {
+  id: number;
+  title: string;
+  original_title: string;
+  tagline: string;
+  overview: string;
+  poster_path: string | null;
+  backdrop_path: string | null;
+  release_date: string;
+  runtime: number;
+  vote_average: number;
+  vote_count: number;
+  popularity: number;
+  budget: number;
+  revenue: number;
+  status: string;
+  genres: TMDBGenre[];
+  production_companies: {
+    id: number;
+    name: string;
+    logo_path: string | null;
+    origin_country: string;
+  }[];
+  spoken_languages: {
+    english_name: string;
+    iso_639_1: string;
+    name: string;
+  }[];
+  origin_country: string[];
+  original_language: string;
+  adult: boolean;
+}
+
+export interface TMDBVideo {
+  id: string;
+  key: string;
+  name: string;
+  site: string;
+  type: string;
+  official: boolean;
+  published_at: string;
+}
+
+export interface TMDBVideosResponse {
+  id: number;
+  results: TMDBVideo[];
+}
+
+export interface TMDBCastMember {
+  id: number;
+  name: string;
+  character: string;
+  profile_path: string | null;
+  order: number;
+}
+
+export interface TMDBCrewMember {
+  id: number;
+  name: string;
+  job: string;
+  department: string;
+  profile_path: string | null;
+}
+
+export interface TMDBCreditsResponse {
+  id: number;
+  cast: TMDBCastMember[];
+  crew: TMDBCrewMember[];
+}
+
 export interface TMDBPaginatedResponse<T> {
   page: number;
   results: T[];
@@ -328,6 +398,21 @@ class TMDBClient {
   // TV Show Details
   async getTVShowDetails(tvId: number): Promise<TMDBTVShowDetails> {
     return this.fetch<TMDBTVShowDetails>(`/tv/${tvId}`);
+  }
+
+  // Movie Details
+  async getMovieDetails(movieId: number): Promise<TMDBMovieDetails> {
+    return this.fetch<TMDBMovieDetails>(`/movie/${movieId}`);
+  }
+
+  // Movie Videos (trailers, etc.)
+  async getMovieVideos(movieId: number): Promise<TMDBVideosResponse> {
+    return this.fetch<TMDBVideosResponse>(`/movie/${movieId}/videos`);
+  }
+
+  // Movie Credits (cast & crew)
+  async getMovieCredits(movieId: number): Promise<TMDBCreditsResponse> {
+    return this.fetch<TMDBCreditsResponse>(`/movie/${movieId}/credits`);
   }
 }
 

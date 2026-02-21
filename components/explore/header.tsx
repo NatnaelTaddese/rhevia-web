@@ -98,14 +98,14 @@ export function Header() {
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  className="mx-1 flex focus:outline-none ring-2 ring-inset ring-white/20"
+                  className="mx-1 flex focus:outline-none"
                 >
                   <Avatar size="default">
                     <AvatarImage
                       src={session.user.image || undefined}
                       alt={session.user.name || session.user.email}
                     />
-                    <AvatarFallback className="bg-white/20 text-white text-xs ring-2 ring-inset ring-white/20">
+                    <AvatarFallback className="bg-white/20 text-white text-xs ring-2 ring-inset ring-white/10">
                       {session.user.name?.charAt(0).toUpperCase() ||
                         session.user.email?.charAt(0).toUpperCase() ||
                         "U"}
