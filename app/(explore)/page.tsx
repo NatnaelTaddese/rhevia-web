@@ -3,7 +3,8 @@ import { Suspense } from "react";
 import { HeroCarousel } from "@/components/explore/hero-carousel";
 import { HeroSkeleton } from "@/components/explore/hero-skeleton";
 import { PopularMoviesSection } from "@/components/explore/popular-movies-section";
-import { getTrendingMovies, getPopularMoviesCards } from "@/lib/explore-data";
+import { PopularSeriesSection } from "@/components/explore/popular-series-section";
+import { getTrendingMovies, getPopularMoviesCards, getPopularTVShowsCards } from "@/lib/explore-data";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +38,11 @@ async function PopularMoviesSectionWrapper() {
   return <PopularMoviesSection movies={movies} />;
 }
 
+async function PopularSeriesSectionWrapper() {
+  const series = await getPopularTVShowsCards(20);
+  return <PopularSeriesSection series={series} />;
+}
+
 export default function Page() {
   return (
     <main className="min-h-screen">
@@ -45,6 +51,9 @@ export default function Page() {
       </Suspense>
       <Suspense fallback={null}>
         <PopularMoviesSectionWrapper />
+      </Suspense>
+      <Suspense fallback={null}>
+        <PopularSeriesSectionWrapper />
       </Suspense>
     </main>
   );

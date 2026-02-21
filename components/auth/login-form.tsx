@@ -54,43 +54,42 @@ export function LoginForm({
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <form onSubmit={handleEmailSignIn}>
-        <FieldGroup>
+        <FieldGroup className="gap-4">
           <div className="flex flex-col items-center gap-2 text-center">
             <Link
-              href="#"
+              href="/"
               className="flex flex-col items-center gap-2 font-medium"
             >
-              <div className="flex size-8 items-center justify-center rounded-md">
+              <div className="flex size-12 items-center justify-center rounded-full bg-black/80 backdrop-blur-xl shadow-xl ring-2 ring-white/10">
                 <HugeiconsIcon
                   icon={Film01Icon}
                   strokeWidth={2}
-                  className="size-6"
+                  className="size-6 text-white"
                 />
               </div>
-              <span className="sr-only">Rhevia.</span>
             </Link>
-            <h1 className="text-xl font-bold">Welcome to Rhevia.</h1>
+            <h1 className="text-2xl font-bold text-white">Welcome to Rhevia</h1>
+            <p className="text-white/60 text-sm">Sign in to your account</p>
           </div>
 
           {errorMessage && (
-            <Alert variant="destructive" className="w-full">
+            <Alert variant="destructive">
               <HugeiconsIcon
                 icon={AlertCircleIcon}
                 strokeWidth={2}
                 className="size-4"
               />
               <AlertTitle>Sign-in failed</AlertTitle>
-              <AlertDescription className="min-w-full">
-                {errorMessage}
-              </AlertDescription>
+              <AlertDescription>{errorMessage}</AlertDescription>
             </Alert>
           )}
 
           <Field>
             <Button
-              variant="outline"
+              variant="secondary"
               type="button"
               disabled={loading}
+              className="w-full"
               onClick={async () => {
                 setErrorMessage(null);
 
@@ -115,7 +114,7 @@ export function LoginForm({
               }}
             >
               {loading ? (
-                <Spinner></Spinner>
+                <Spinner />
               ) : (
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -145,7 +144,7 @@ export function LoginForm({
               Continue with Google
             </Button>
           </Field>
-          <FieldSeparator className="select-none">Or</FieldSeparator>
+          <FieldSeparator>or</FieldSeparator>
           <Field>
             <FieldLabel htmlFor="email">Email</FieldLabel>
             <Input
@@ -176,14 +175,18 @@ export function LoginForm({
               disabled={
                 loading || email.trim().length === 0 || password.length === 0
               }
+              className="w-full"
             >
-              {loading ? <Spinner></Spinner> : "Login"}
+              {loading ? <Spinner /> : "Login"}
             </Button>
           </Field>
         </FieldGroup>
       </form>
-      <FieldDescription className="text-center select-none">
-        Don&apos;t have an account? <Link href="/signup">Sign up</Link>
+      <FieldDescription className="text-center">
+        Don&apos;t have an account?{" "}
+        <Link href="/signup" className="text-white hover:text-white/80">
+          Sign up
+        </Link>
       </FieldDescription>
     </div>
   );

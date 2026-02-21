@@ -98,8 +98,7 @@ function FieldLabel({
     <Label
       data-slot="field-label"
       className={cn(
-        "has-data-checked:bg-primary/5 dark:has-data-checked:bg-primary/10 gap-2 group-data-[disabled=true]/field:opacity-50 has-[>[data-slot=field]]:rounded-md has-[>[data-slot=field]]:border *:data-[slot=field]:p-2 group/field-label peer/field-label flex w-fit leading-snug",
-        "has-[>[data-slot=field]]:w-full has-[>[data-slot=field]]:flex-col",
+        "text-sm text-white/60 font-medium",
         className
       )}
       {...props}
@@ -125,9 +124,7 @@ function FieldDescription({ className, ...props }: React.ComponentProps<"p">) {
     <p
       data-slot="field-description"
       className={cn(
-        "text-muted-foreground text-left text-xs/relaxed [[data-variant=legend]+&]:-mt-1.5 leading-normal font-normal group-has-data-horizontal/field:text-balance",
-        "last:mt-0 nth-last-2:-mt-1",
-        "[&>a:hover]:text-primary [&>a]:underline [&>a]:underline-offset-4",
+        "text-white/40 text-sm [&>a:hover]:text-white [&>a]:underline [&>a]:underline-offset-4",
         className
       )}
       {...props}
@@ -146,13 +143,13 @@ function FieldSeparator({
     <div
       data-slot="field-separator"
       data-content={!!children}
-      className={cn("-my-2 h-5 text-xs/relaxed group-data-[variant=outline]/field-group:-mb-2 relative", className)}
+      className={cn("relative my-4", className)}
       {...props}
     >
-      <Separator className="absolute inset-0 top-1/2" />
+      <Separator className="bg-white/10" />
       {children && (
         <span
-          className="text-muted-foreground px-2 bg-background relative mx-auto block w-fit"
+          className="text-white/40 px-4 bg-background absolute left-1/2 -translate-x-1/2 -translate-y-1/2 text-sm"
           data-slot="field-separator-content"
         >
           {children}

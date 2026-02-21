@@ -69,43 +69,42 @@ export function SignupForm({
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <form onSubmit={handleEmailSignUp}>
-        <FieldGroup>
+        <FieldGroup className="gap-4">
           <div className="flex flex-col items-center gap-2 text-center">
             <Link
-              href="#"
+              href="/"
               className="flex flex-col items-center gap-2 font-medium"
             >
-              <div className="flex size-8 items-center justify-center rounded-md">
+              <div className="flex size-12 items-center justify-center rounded-full bg-black/80 backdrop-blur-xl shadow-xl ring-2 ring-white/10">
                 <HugeiconsIcon
                   icon={Film01Icon}
                   strokeWidth={2}
-                  className="size-6"
+                  className="size-6 text-white"
                 />
               </div>
-              <span className="sr-only">Rhevia.</span>
             </Link>
-            <h1 className="text-xl font-bold">Create your account</h1>
+            <h1 className="text-2xl font-bold text-white">Create your account</h1>
+            <p className="text-white/60 text-sm">Get started with Rhevia</p>
           </div>
 
           {errorMessage && (
-            <Alert variant="destructive" className="w-full">
+            <Alert variant="destructive">
               <HugeiconsIcon
                 icon={AlertCircleIcon}
                 strokeWidth={2}
                 className="size-4"
               />
               <AlertTitle>Sign-up failed</AlertTitle>
-              <AlertDescription className="min-w-full">
-                {errorMessage}
-              </AlertDescription>
+              <AlertDescription>{errorMessage}</AlertDescription>
             </Alert>
           )}
 
           <Field>
             <Button
-              variant="outline"
+              variant="secondary"
               type="button"
               disabled={loading}
+              className="w-full"
               onClick={async () => {
                 setErrorMessage(null);
 
@@ -130,7 +129,7 @@ export function SignupForm({
               }}
             >
               {loading ? (
-                <Spinner></Spinner>
+                <Spinner />
               ) : (
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -160,7 +159,7 @@ export function SignupForm({
               Continue with Google
             </Button>
           </Field>
-          <FieldSeparator className="select-none">Or</FieldSeparator>
+          <FieldSeparator>or</FieldSeparator>
           <Field>
             <FieldLabel htmlFor="name">Name</FieldLabel>
             <Input
@@ -198,7 +197,7 @@ export function SignupForm({
               disabled={loading}
             />
             {password.length > 0 && !passwordIsValid && (
-              <FieldDescription className="text-destructive">
+              <FieldDescription className="text-red-400">
                 Password must be at least 8 characters
               </FieldDescription>
             )}
@@ -215,20 +214,23 @@ export function SignupForm({
               disabled={loading}
             />
             {confirmPassword.length > 0 && !passwordsMatch && (
-              <FieldDescription className="text-destructive">
+              <FieldDescription className="text-red-400">
                 Passwords do not match
               </FieldDescription>
             )}
           </Field>
           <Field>
-            <Button type="submit" disabled={loading || !isFormValid}>
-              {loading ? <Spinner></Spinner> : "Sign up"}
+            <Button type="submit" disabled={loading || !isFormValid} className="w-full">
+              {loading ? <Spinner /> : "Sign up"}
             </Button>
           </Field>
         </FieldGroup>
       </form>
-      <FieldDescription className="text-center select-none">
-        Already have an account? <Link href="/login">Log in</Link>
+      <FieldDescription className="text-center">
+        Already have an account?{" "}
+        <Link href="/login" className="text-white hover:text-white/80">
+          Log in
+        </Link>
       </FieldDescription>
     </div>
   );

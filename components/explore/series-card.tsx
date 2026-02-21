@@ -4,23 +4,23 @@ import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-export interface MovieCardData {
+export interface SeriesCardData {
   id: number;
   title: string;
   posterUrl: string;
-  releaseYear: string;
+  airDateRange: string;
   voteAverage: number;
 }
 
-interface MovieCardProps {
-  movie: MovieCardData;
+interface SeriesCardProps {
+  series: SeriesCardData;
   className?: string;
 }
 
-export function MovieCard({ movie, className }: MovieCardProps) {
+export function SeriesCard({ series, className }: SeriesCardProps) {
   return (
     <Link
-      href={`/movies/${movie.id}`}
+      href={`/shows/${series.id}`}
       className={cn(
         "group relative block shrink-0 hover:scale-105 transition-all ease-out",
         className,
@@ -29,14 +29,14 @@ export function MovieCard({ movie, className }: MovieCardProps) {
       <div
         className={cn(
           "relative aspect-2/3 w-36 sm:w-40 overflow-hidden rounded-2xl",
-          "bg-black/80 backdrop-blur-xl shadow-xl ring-2  ring-white/10",
+          "bg-black/80 backdrop-blur-xl shadow-xl ring-2 ring-white/10",
           "transition-all duration-300 ease-out",
           "group-hover:ring-white/20",
         )}
       >
         <Image
-          src={movie.posterUrl}
-          alt={movie.title}
+          src={series.posterUrl}
+          alt={series.title}
           fill
           sizes="(max-width: 640px) 144px, 160px"
           className="object-cover"
@@ -57,14 +57,14 @@ export function MovieCard({ movie, className }: MovieCardProps) {
           )}
         >
           <h3 className="text-sm font-semibold text-white line-clamp-2 leading-tight">
-            {movie.title}
+            {series.title}
           </h3>
           <div className="flex items-center gap-2 mt-1 text-xs text-white/60">
             <span className="flex items-center gap-1">
               <span className="text-yellow-500">★</span>
-              <span>{movie.voteAverage}</span>
+              <span>{series.voteAverage}</span>
             </span>
-            {movie.releaseYear && <span>{movie.releaseYear}</span>}
+            {series.airDateRange && <span>{series.airDateRange}</span>}
           </div>
         </div>
       </div>

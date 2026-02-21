@@ -81,7 +81,7 @@ export function Header() {
         {/* Right: Search + User - Dynamic Island Style */}
         <div className="flex h-11 items-center gap-0.5 rounded-full bg-black/90 px-1 backdrop-blur-xl shadow-xl ring-2 ring-white/10">
           {/* Search Button */}
-          <Button className="flex ml-1 size-8 items-center justify-center rounded-full bg-transparent text-white/60 cursor-pointer transition-all duration-200 hover:bg-white/10 hover:text-white">
+          <Button variant="ghost" size="icon-sm" className="ml-1">
             <HugeiconsIcon
               icon={Search01Icon}
               strokeWidth={3}
@@ -95,7 +95,7 @@ export function Header() {
           ) : (
             <DropdownMenu>
               <DropdownMenuTrigger>
-                <Button className="flex mx-1 size-8 items-center justify-center bg-transparent rounded-full cursor-pointer transition-all duration-200 hover:bg-white/10 focus:outline-none">
+                <Button variant="ghost" size="icon-sm" className="mx-1 focus:outline-none">
                   <Avatar
                     size="default"
                     className="size-8 flex items-center justify-center"

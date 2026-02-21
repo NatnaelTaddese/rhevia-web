@@ -74,6 +74,19 @@ export interface TMDBTVShow {
   original_language: string;
 }
 
+export interface TMDBTVShowDetails {
+  id: number;
+  name: string;
+  first_air_date: string;
+  last_air_date: string | null;
+  in_production: boolean;
+  poster_path: string | null;
+  backdrop_path: string | null;
+  vote_average: number;
+  vote_count: number;
+  popularity: number;
+}
+
 export interface TMDBPaginatedResponse<T> {
   page: number;
   results: T[];
@@ -310,6 +323,11 @@ class TMDBClient {
       query,
       page: page.toString(),
     });
+  }
+
+  // TV Show Details
+  async getTVShowDetails(tvId: number): Promise<TMDBTVShowDetails> {
+    return this.fetch<TMDBTVShowDetails>(`/tv/${tvId}`);
   }
 }
 

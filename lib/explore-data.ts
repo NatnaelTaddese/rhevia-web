@@ -1,4 +1,4 @@
-import { tmdb, getBackdropUrl, getPosterUrl, getLogoUrl, type TMDBMovie } from "@/lib/tmdb";
+import { tmdb, getBackdropUrl, getPosterUrl, getLogoUrl, type TMDBMovie, type TMDBTVShow } from "@/lib/tmdb";
 
 export interface HeroMovie {
   id: number;
@@ -15,6 +15,14 @@ export interface MovieCardData {
   title: string;
   posterUrl: string;
   releaseYear: string;
+  voteAverage: number;
+}
+
+export interface TVShowCardData {
+  id: number;
+  title: string;
+  posterUrl: string;
+  airDateRange: string;
   voteAverage: number;
 }
 
@@ -191,6 +199,64 @@ export async function getPopularMoviesCards(limit = 20): Promise<MovieCardData[]
     }));
   } catch (error) {
     console.error("Failed to fetch popular movies:", error);
+    return [];
+  }
+}
+
+export async function getPopularTVShowsCards(limit = 20): Promise<TVShowCardData[]> {
+  try {
+    const response = await tmdb.getPopularTVShows();
+
+    const filteredShows = response.results
+      .filter(
+        (show): show is TMDBTVShow & { poster_path: string } =>
+          show.poster_path !== null,
+      )
+      .slice(0, limit);
+
+    const showsWithDetails = await Promise.all(
+      filteredShows.map(async (show) => {
+        let airDateRange = "";
+        const firstYear = show.first_air_date
+          ? show.first_air_date.split("-")[0]
+          : "";
+
+        try {
+          const details = await tmdb.getTVShowDetails(show.id);
+          const firstYearDetail = details.first_air_date
+            ? details.first_air_date.split("-")[0]
+            : firstYear;
+          const lastYear = details.last_air_date
+            ? details.last_air_date.split("-")[0]
+            : "";
+
+          if (firstYearDetail) {
+            if (details.in_production) {
+              airDateRange = `${firstYearDetail} - Present`;
+            } else if (lastYear && firstYearDetail !== lastYear) {
+              airDateRange = `${firstYearDetail} - ${lastYear}`;
+            } else {
+              airDateRange = firstYearDetail;
+            }
+          }
+        } catch (error) {
+          console.error(`Failed to fetch details for TV show ${show.id}:`, error);
+          airDateRange = firstYear;
+        }
+
+        return {
+          id: show.id,
+          title: show.name,
+          posterUrl: getPosterUrl(show.poster_path, "medium") as string,
+          airDateRange,
+          voteAverage: Math.round(show.vote_average * 10) / 10,
+        };
+      }),
+    );
+
+    return showsWithDetails;
+  } catch (error) {
+    console.error("Failed to fetch popular TV shows:", error);
     return [];
   }
 }
