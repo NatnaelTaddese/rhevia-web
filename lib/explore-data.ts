@@ -1,4 +1,4 @@
-import { tmdb, getBackdropUrl, getLogoUrl, type TMDBMovie } from "@/lib/tmdb";
+import { tmdb, getBackdropUrl, getPosterUrl, getLogoUrl, type TMDBMovie } from "@/lib/tmdb";
 
 export interface HeroMovie {
   id: number;
@@ -6,6 +6,14 @@ export interface HeroMovie {
   overview: string;
   backdropUrl: string;
   logoUrl: string | null;
+  releaseYear: string;
+  voteAverage: number;
+}
+
+export interface MovieCardData {
+  id: number;
+  title: string;
+  posterUrl: string;
   releaseYear: string;
   voteAverage: number;
 }
@@ -159,6 +167,30 @@ export async function getNowPlayingMovies(limit = 20): Promise<HeroMovie[]> {
     return moviesWithLogos;
   } catch (error) {
     console.error("Failed to fetch now playing movies:", error);
+    return [];
+  }
+}
+
+export async function getPopularMoviesCards(limit = 20): Promise<MovieCardData[]> {
+  try {
+    const response = await tmdb.getPopularMovies();
+
+    const filteredMovies = response.results
+      .filter(
+        (movie): movie is TMDBMovie & { poster_path: string } =>
+          movie.poster_path !== null,
+      )
+      .slice(0, limit);
+
+    return filteredMovies.map((movie) => ({
+      id: movie.id,
+      title: movie.title,
+      posterUrl: getPosterUrl(movie.poster_path, "medium") as string,
+      releaseYear: movie.release_date ? movie.release_date.split("-")[0] : "",
+      voteAverage: Math.round(movie.vote_average * 10) / 10,
+    }));
+  } catch (error) {
+    console.error("Failed to fetch popular movies:", error);
     return [];
   }
 }

@@ -2,9 +2,9 @@ import { Suspense } from "react";
 
 import { HeroCarousel } from "@/components/explore/hero-carousel";
 import { HeroSkeleton } from "@/components/explore/hero-skeleton";
-import { getTrendingMovies } from "@/lib/explore-data";
+import { PopularMoviesSection } from "@/components/explore/popular-movies-section";
+import { getTrendingMovies, getPopularMoviesCards } from "@/lib/explore-data";
 
-// Force dynamic rendering to avoid TMDB API calls at build time
 export const dynamic = "force-dynamic";
 
 async function HeroSection() {
@@ -32,11 +32,19 @@ async function HeroSection() {
   return <HeroCarousel movies={movies} />;
 }
 
+async function PopularMoviesSectionWrapper() {
+  const movies = await getPopularMoviesCards(20);
+  return <PopularMoviesSection movies={movies} />;
+}
+
 export default function Page() {
   return (
     <main className="min-h-screen">
       <Suspense fallback={<HeroSkeleton />}>
         <HeroSection />
+      </Suspense>
+      <Suspense fallback={null}>
+        <PopularMoviesSectionWrapper />
       </Suspense>
     </main>
   );
