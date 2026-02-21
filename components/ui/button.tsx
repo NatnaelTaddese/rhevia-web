@@ -29,6 +29,7 @@ const buttonVariants = cva(
         icon: "size-9 [&_svg:not([class*='size-'])]:size-4",
         "icon-sm": "size-8 [&_svg:not([class*='size-'])]:size-3.5",
         "icon-lg": "size-10 [&_svg:not([class*='size-'])]:size-5",
+        "icon-xs": "size-6 [&_svg:not([class*='size-'])]:size-3",
       },
     },
     defaultVariants: {
