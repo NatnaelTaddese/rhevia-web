@@ -283,28 +283,25 @@ export async function getSimilarShowsData(tvId: number, limit = 20): Promise<Sim
   }
 }
 
-export async function getSeasonEpisodesData(tvId: number, seasonNumber: number): Promise<SeasonEpisodes | null> {
+export async function getRecommendedShowsData(tvId: number, limit = 20): Promise<SimilarShow[]> {
   try {
-    const season = await tmdb.getTVSeasonDetails(tvId, seasonNumber);
+    const response = await tmdb.getTVRecommendations(tvId);
 
-    return {
-      seasonNumber: season.season_number,
-      seasonName: season.name,
-      episodes: season.episodes.map((ep) => ({
-        id: ep.id,
-        name: ep.name,
-        overview: ep.overview,
-        episodeNumber: ep.episode_number,
-        seasonNumber: ep.season_number,
-        stillUrl: ep.still_path ? `https://image.tmdb.org/t/p/w300${ep.still_path}` : null,
-        airDate: ep.air_date,
-        runtime: ep.runtime,
-        voteAverage: Math.round(ep.vote_average * 10) / 10,
-      })),
-    };
+    return response.results
+      .filter((show) => show.poster_path)
+      .slice(0, limit)
+      .map((show) => ({
+        id: show.id,
+        name: show.name,
+        posterUrl: getPosterUrl(show.poster_path, "medium"),
+        backdropUrl: getBackdropUrl(show.backdrop_path, "large"),
+        firstAirYear: show.first_air_date ? show.first_air_date.split("-")[0] : "",
+        voteAverage: Math.round(show.vote_average * 10) / 10,
+        overview: show.overview,
+      }));
   } catch (error) {
-    console.error(`Failed to fetch season ${seasonNumber}:`, error);
-    return null;
+    console.error("Failed to fetch recommended TV shows:", error);
+    return [];
   }
 }
 

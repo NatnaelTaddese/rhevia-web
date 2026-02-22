@@ -10,6 +10,7 @@ import {
 } from "@hugeicons/core-free-icons";
 
 import { cn } from "@/lib/utils";
+import { getSeasonEpisodesData } from "@/lib/show-actions";
 import type { ShowSeason, SeasonEpisodes } from "@/lib/show-data";
 
 interface ShowEpisodesProps {
@@ -196,9 +197,8 @@ export function ShowEpisodes({
     if (!seasonData.has(num)) {
       setLoading(true);
       try {
-        const response = await fetch(`/api/shows/${showId}/season/${num}`);
-        if (response.ok) {
-          const data = await response.json();
+        const data = await getSeasonEpisodesData(showId, num);
+        if (data) {
           setSeasonData((prev) => new Map(prev).set(num, data));
         }
       } catch (error) {

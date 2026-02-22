@@ -614,6 +614,17 @@ class TMDBClient {
     );
   }
 
+  // TV Show Recommendations
+  async getTVRecommendations(
+    tvId: number,
+    page = 1,
+  ): Promise<TMDBPaginatedResponse<TMDBTVShow>> {
+    return this.fetch<TMDBPaginatedResponse<TMDBTVShow>>(
+      `/tv/${tvId}/recommendations`,
+      { page: page.toString() },
+    );
+  }
+
   // TV Watch Providers
   async getTVWatchProviders(tvId: number): Promise<TMDBWatchProvidersResponse> {
     return this.fetch<TMDBWatchProvidersResponse>(`/tv/${tvId}/watch/providers`);

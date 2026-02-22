@@ -6,11 +6,13 @@ import { ShowTrailers } from "@/components/shows/show-trailers";
 import { ShowEpisodes } from "@/components/shows/show-episodes";
 import { ShowCreditsSection } from "@/components/shows/show-credits";
 import { SimilarShowsSection } from "@/components/shows/similar-shows";
+import { RecommendedShowsSection } from "@/components/shows/recommended-shows";
 import {
   getShowDetailsData,
   getShowVideosData,
   getShowCreditsData,
   getSimilarShowsData,
+  getRecommendedShowsData,
   getShowInfoData,
   getSeasonEpisodesData,
 } from "@/lib/show-data";
@@ -30,10 +32,11 @@ async function ShowContent({ id }: { id: number }) {
     notFound();
   }
 
-  const [videos, credits, similarShows, showInfo] = await Promise.all([
+  const [videos, credits, similarShows, recommendedShows, showInfo] = await Promise.all([
     getShowVideosData(id),
     getShowCreditsData(id),
     getSimilarShowsData(id),
+    getRecommendedShowsData(id),
     getShowInfoData(id),
   ]);
 
@@ -63,6 +66,7 @@ async function ShowContent({ id }: { id: number }) {
           <ShowCreditsSection credits={credits} />
         )}
         {similarShows.length > 0 && <SimilarShowsSection shows={similarShows} />}
+        {recommendedShows.length > 0 && <RecommendedShowsSection shows={recommendedShows} />}
       </div>
     </>
   );
