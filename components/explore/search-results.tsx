@@ -3,7 +3,14 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState, useRef } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Film01Icon, Loading03Icon, Tv01Icon } from "@hugeicons/core-free-icons";
+import {
+  ArrowLeft01Icon,
+  ArrowRight01Icon,
+  Film01Icon,
+  Loading03Icon,
+  Tv01Icon,
+} from "@hugeicons/core-free-icons";
+import Link from "next/link";
 
 import { MovieCard, type MovieCardData } from "./movie-card";
 import { SeriesCard, type SeriesCardData } from "./series-card";
@@ -14,6 +21,143 @@ interface SearchResultsProps {
   isOpen: boolean;
   searchQuery: string;
   onClose: () => void;
+}
+
+interface ScrollableSectionProps {
+  title: string;
+  icon: React.ReactNode;
+  count: number;
+  children: React.ReactNode;
+  bgColor?: string;
+}
+
+function ScrollableSection({
+  title,
+  icon,
+  count,
+  children,
+  bgColor = "bg-black/80",
+}: ScrollableSectionProps) {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const checkScrollButtons = () => {
+    if (!scrollContainerRef.current) return;
+
+    const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+    setCanScrollLeft(scrollLeft > 0);
+    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+  };
+
+  useEffect(() => {
+    checkScrollButtons();
+    window.addEventListener("resize", checkScrollButtons);
+    return () => window.removeEventListener("resize", checkScrollButtons);
+  }, []);
+
+  const scroll = (direction: "left" | "right") => {
+    if (!scrollContainerRef.current) return;
+
+    const scrollAmount = 320;
+    const newScrollLeft =
+      scrollContainerRef.current.scrollLeft +
+      (direction === "left" ? -scrollAmount : scrollAmount);
+
+    scrollContainerRef.current.scrollTo({
+      left: newScrollLeft,
+      behavior: "smooth",
+    });
+  };
+
+  return (
+    <section className="relative">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          {icon}
+          <h2 className="text-sm font-medium text-white">{title}</h2>
+          <span className="text-xs text-white/40">({count})</span>
+        </div>
+
+        <div
+          className={cn(
+            "flex h-8 items-center gap-0.5 rounded-full px-1",
+            "backdrop-blur-xl shadow-xl ring-2 ring-white/10",
+            bgColor,
+          )}
+        >
+          <button
+            onClick={() => scroll("left")}
+            disabled={!canScrollLeft}
+            className={cn(
+              "flex size-6 items-center justify-center rounded-full transition-all duration-200",
+              "text-white/60 hover:bg-white/10 hover:text-white",
+              "disabled:opacity-30 disabled:pointer-events-none",
+            )}
+            aria-label="Scroll left"
+          >
+            <HugeiconsIcon
+              icon={ArrowLeft01Icon}
+              strokeWidth={3}
+              className="size-3"
+            />
+          </button>
+          <button
+            onClick={() => scroll("right")}
+            disabled={!canScrollRight}
+            className={cn(
+              "flex size-6 items-center justify-center rounded-full transition-all duration-200",
+              "text-white/60 hover:bg-white/10 hover:text-white",
+              "disabled:opacity-30 disabled:pointer-events-none",
+            )}
+            aria-label="Scroll right"
+          >
+            <HugeiconsIcon
+              icon={ArrowRight01Icon}
+              strokeWidth={3}
+              className="size-3"
+            />
+          </button>
+        </div>
+      </div>
+
+      <div className="relative overflow-hidden">
+        <div
+          ref={scrollContainerRef}
+          onScroll={checkScrollButtons}
+          className={cn(
+            "flex gap-4 overflow-x-auto scrollbar-hide p-4",
+            "scroll-smooth",
+          )}
+          style={{
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
+          }}
+        >
+          {children}
+        </div>
+
+        <div
+          aria-hidden="true"
+          style={
+            {
+              "--left-fade-width": canScrollLeft ? "48px" : "0px",
+              "--right-fade-width": canScrollRight ? "48px" : "0px",
+            } as React.CSSProperties
+          }
+          className={cn(
+            "pointer-events-none absolute inset-y-0 left-0 right-0 z-20",
+            "before:absolute before:inset-y-0 before:left-0 before:transition-[width,opacity] before:duration-300 before:content-['']",
+            "after:absolute after:inset-y-0 after:right-0 after:transition-[width,opacity] after:duration-300 after:content-['']",
+            "before:w-[var(--left-fade-width)] after:w-[var(--right-fade-width)]",
+            canScrollLeft ? "before:opacity-100" : "before:opacity-0",
+            canScrollRight ? "after:opacity-100" : "after:opacity-0",
+            "before:from-black after:from-black before:bg-gradient-to-r before:to-transparent after:bg-gradient-to-l after:to-transparent",
+          )}
+        />
+      </div>
+    </section>
+  );
 }
 
 export function SearchResults({
@@ -113,49 +257,53 @@ export function SearchResults({
               {!isLoading && hasResults && (
                 <div className="space-y-6">
                   {movies.length > 0 && (
-                    <section>
-                      <div className="flex items-center gap-2 mb-3">
+                    <ScrollableSection
+                      title="Movies"
+                      count={movies.length}
+                      icon={
                         <HugeiconsIcon
                           icon={Film01Icon}
                           strokeWidth={2}
                           className="size-4 text-white/60"
                         />
-                        <h2 className="text-sm font-medium text-white">
-                          Movies
-                        </h2>
-                        <span className="text-xs text-white/40">
-                          ({movies.length})
-                        </span>
-                      </div>
-                      <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                        {movies.map((movie) => (
-                          <MovieCard key={movie.id} movie={movie} />
-                        ))}
-                      </div>
-                    </section>
+                      }
+                      bgColor="bg-white/5"
+                    >
+                      {movies.map((movie) => (
+                        <Link
+                          key={movie.id}
+                          href={`/movies/${movie.id}`}
+                          onClick={onClose}
+                        >
+                          <MovieCard movie={movie} />
+                        </Link>
+                      ))}
+                    </ScrollableSection>
                   )}
 
                   {shows.length > 0 && (
-                    <section>
-                      <div className="flex items-center gap-2 mb-3">
+                    <ScrollableSection
+                      title="TV Shows"
+                      count={shows.length}
+                      icon={
                         <HugeiconsIcon
                           icon={Tv01Icon}
                           strokeWidth={2}
                           className="size-4 text-white/60"
                         />
-                        <h2 className="text-sm font-medium text-white">
-                          TV Shows
-                        </h2>
-                        <span className="text-xs text-white/40">
-                          ({shows.length})
-                        </span>
-                      </div>
-                      <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                        {shows.map((show) => (
-                          <SeriesCard key={show.id} series={show} />
-                        ))}
-                      </div>
-                    </section>
+                      }
+                      bgColor="bg-white/5"
+                    >
+                      {shows.map((show) => (
+                        <Link
+                          key={show.id}
+                          href={`/shows/${show.id}`}
+                          onClick={onClose}
+                        >
+                          <SeriesCard series={show} />
+                        </Link>
+                      ))}
+                    </ScrollableSection>
                   )}
                 </div>
               )}

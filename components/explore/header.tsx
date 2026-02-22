@@ -121,179 +121,205 @@ export function Header() {
 
           <div
             className={cn(
-              "flex h-11 items-center rounded-full bg-black/90 px-1 backdrop-blur-xl shadow-xl ring-2 ring-white/10 font-sf-pro",
-              "transition-[width] duration-100 ease-[cubic-bezier(0.4,0,0.2,1)]",
-              !isSearchOpen ? "w-auto" : "w-[280px] sm:w-[360px] md:w-[420px]",
+              "flex h-11 items-center rounded-full bg-black/90 px-1 backdrop-blur-xl shadow-xl ring-2 ring-white/10 font-sf-pro overflow-hidden",
+              "transition-all duration-150 ease-out",
+              !isSearchOpen
+                ? "w-[86px]"
+                : "w-[280px] sm:w-[360px] md:w-[420px]",
             )}
           >
-            <AnimatePresence mode="wait">
-              {!isSearchOpen ? (
-                <motion.div
-                  key="searchBtn"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.1 }}
-                  className="flex items-center"
-                >
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    className="ml-1"
-                    onClick={openSearch}
-                  >
-                    <HugeiconsIcon
-                      icon={Search01Icon}
-                      strokeWidth={3}
-                      className="size-4"
-                    />
-                  </Button>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="searchInput"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.1 }}
-                  className="flex items-center w-full"
-                >
-                  <HugeiconsIcon
-                    icon={Search01Icon}
-                    strokeWidth={3}
-                    className="ml-3 size-4 text-white/60 shrink-0"
-                  />
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    placeholder="Search movies and shows..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="flex-1 h-11 min-w-0 bg-transparent px-3 text-sm text-white placeholder:text-white/40 outline-none"
-                  />
-                  {searchQuery && (
-                    <Button
-                      variant="ghost"
-                      size="icon-xs"
-                      onClick={() => setSearchQuery("")}
-                      className="shrink-0"
-                    >
-                      <HugeiconsIcon
-                        icon={Eraser01Icon}
-                        strokeWidth={3}
-                        className="size-3 transform -scale-x-100"
-                      />
-                    </Button>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <div className="flex items-center shrink-0">
-              <AnimatePresence>
-                {isSearchOpen && (
+            <div className="flex items-center justify-between w-full">
+              <AnimatePresence mode="wait">
+                {!isSearchOpen ? (
                   <motion.div
-                    key="closeBtn"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.1 }}
-                    className=""
+                    key="searchBtn"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    transition={{ duration: 0.15, ease: "easeOut" }}
+                    className="flex items-center shrink-0"
                   >
                     <Button
                       variant="ghost"
                       size="icon-sm"
-                      onClick={closeSearch}
                       className="ml-1"
+                      onClick={openSearch}
                     >
                       <HugeiconsIcon
-                        icon={Cancel01Icon}
+                        icon={Search01Icon}
                         strokeWidth={3}
                         className="size-4"
                       />
                     </Button>
                   </motion.div>
+                ) : (
+                  <motion.div
+                    key="searchInput"
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 10 }}
+                    transition={{ duration: 0.15, ease: "easeOut" }}
+                    className="flex items-center flex-1 min-w-0"
+                  >
+                    <HugeiconsIcon
+                      icon={Search01Icon}
+                      strokeWidth={3}
+                      className="ml-3 size-4 text-white/60 shrink-0"
+                    />
+                    <input
+                      ref={inputRef}
+                      type="text"
+                      placeholder="Search movies and shows..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="flex-1 h-11 min-w-0 bg-transparent px-3 text-sm text-white placeholder:text-white/40 outline-none"
+                    />
+                    {searchQuery && (
+                      <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        onClick={() => setSearchQuery("")}
+                        className="shrink-0"
+                      >
+                        <HugeiconsIcon
+                          icon={Eraser01Icon}
+                          strokeWidth={3}
+                          className="size-3 transform -scale-x-100"
+                        />
+                      </Button>
+                    )}
+                  </motion.div>
                 )}
               </AnimatePresence>
 
-              {isPending || !session?.user ? (
-                <div className="size-8 animate-pulse rounded-full bg-white/20 mx-1" />
-              ) : (
-                <DropdownMenu>
-                  <DropdownMenuTrigger>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      className="mx-1 flex focus:outline-none"
+              <div className="flex items-center shrink-0">
+                <AnimatePresence mode="wait">
+                  {isSearchOpen ? (
+                    <motion.div
+                      key="closeBtn"
+                      initial={{ opacity: 0, x: 10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 10 }}
+                      transition={{ duration: 0.15, ease: "easeOut" }}
                     >
-                      <Avatar size="default">
-                        <AvatarImage
-                          src={session.user.image || undefined}
-                          alt={session.user.name || session.user.email}
-                        />
-                        <AvatarFallback className="bg-white/20 text-white text-xs ring-2 ring-inset ring-white/10">
-                          {session.user.name?.charAt(0).toUpperCase() ||
-                            session.user.email?.charAt(0).toUpperCase() ||
-                            "U"}
-                        </AvatarFallback>
-                      </Avatar>
-                    </Button>
-                  </DropdownMenuTrigger>
-
-                  {session?.user?.isAnonymous ? (
-                    <DropdownMenuContent align="end" className="mt-4 w-56">
-                      <div className="px-3 py-2">
-                        <p className="text-sm font-medium">
-                          {session.user.name}
-                        </p>
-                        <p className="text-xs text-white/60">
-                          login to track your progress
-                        </p>
-                      </div>
-
-                      <DropdownMenuItem>
-                        <Link
-                          href="/login"
-                          className="flex w-full h-full items-center gap-2"
-                        >
-                          <HugeiconsIcon icon={Logout03Icon} strokeWidth={2} />
-                          <span>Log In</span>
-                        </Link>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  ) : (
-                    <DropdownMenuContent align="end" className="mt-4 w-56">
-                      <div className="px-3 py-2">
-                        <p className="text-sm font-medium">
-                          {session.user.name}
-                        </p>
-                        <p className="text-xs text-white/60">
-                          {session.user.email}
-                        </p>
-                      </div>
-                      <DropdownMenuSeparator />
-
-                      <DropdownMenuItem>
-                        <Link
-                          href="/profile"
-                          className="flex w-full items-center gap-2"
-                        >
-                          <HugeiconsIcon icon={User02Icon} strokeWidth={2} />
-                          <span>Profile</span>
-                        </Link>
-                      </DropdownMenuItem>
-
-                      <DropdownMenuItem
-                        onClick={handleSignOut}
-                        variant="destructive"
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={closeSearch}
+                        className="ml-1"
                       >
-                        <HugeiconsIcon icon={Logout03Icon} strokeWidth={2} />
-                        <span>Sign out</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
+                        <HugeiconsIcon
+                          icon={Cancel01Icon}
+                          strokeWidth={3}
+                          className="size-4"
+                        />
+                      </Button>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="avatar"
+                      initial={{ opacity: 0, x: 10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 10 }}
+                      transition={{ duration: 0.15, ease: "easeOut" }}
+                    >
+                      {isPending || !session?.user ? (
+                        <div className="size-8 animate-pulse rounded-full bg-white/20 mx-1" />
+                      ) : (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger>
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              className="mx-1 flex focus:outline-none"
+                            >
+                              <Avatar size="default">
+                                <AvatarImage
+                                  src={session.user.image || undefined}
+                                  alt={session.user.name || session.user.email}
+                                />
+                                <AvatarFallback className="bg-white/20 text-white text-xs ring-2 ring-inset ring-white/10">
+                                  {session.user.name?.charAt(0).toUpperCase() ||
+                                    session.user.email?.charAt(0).toUpperCase() ||
+                                    "U"}
+                                </AvatarFallback>
+                              </Avatar>
+                            </Button>
+                          </DropdownMenuTrigger>
+
+                          {session?.user?.isAnonymous ? (
+                            <DropdownMenuContent
+                              align="end"
+                              className="mt-4 w-56"
+                            >
+                              <div className="px-3 py-2">
+                                <p className="text-sm font-medium">
+                                  {session.user.name}
+                                </p>
+                                <p className="text-xs text-white/60">
+                                  login to track your progress
+                                </p>
+                              </div>
+
+                              <DropdownMenuItem>
+                                <Link
+                                  href="/login"
+                                  className="flex w-full h-full items-center gap-2"
+                                >
+                                  <HugeiconsIcon
+                                    icon={Logout03Icon}
+                                    strokeWidth={2}
+                                  />
+                                  <span>Log In</span>
+                                </Link>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          ) : (
+                            <DropdownMenuContent
+                              align="end"
+                              className="mt-4 w-56"
+                            >
+                              <div className="px-3 py-2">
+                                <p className="text-sm font-medium">
+                                  {session.user.name}
+                                </p>
+                                <p className="text-xs text-white/60">
+                                  {session.user.email}
+                                </p>
+                              </div>
+                              <DropdownMenuSeparator />
+
+                              <DropdownMenuItem>
+                                <Link
+                                  href="/profile"
+                                  className="flex w-full items-center gap-2"
+                                >
+                                  <HugeiconsIcon
+                                    icon={User02Icon}
+                                    strokeWidth={2}
+                                  />
+                                  <span>Profile</span>
+                                </Link>
+                              </DropdownMenuItem>
+
+                              <DropdownMenuItem
+                                onClick={handleSignOut}
+                                variant="destructive"
+                              >
+                                <HugeiconsIcon
+                                  icon={Logout03Icon}
+                                  strokeWidth={2}
+                                />
+                                <span>Sign out</span>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          )}
+                        </DropdownMenu>
+                      )}
+                    </motion.div>
                   )}
-                </DropdownMenu>
-              )}
+                </AnimatePresence>
+              </div>
             </div>
           </div>
         </div>
