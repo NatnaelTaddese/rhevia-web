@@ -583,6 +583,17 @@ class TMDBClient {
     );
   }
 
+  // Movie Recommendations
+  async getMovieRecommendations(
+    movieId: number,
+    page = 1,
+  ): Promise<TMDBPaginatedResponse<TMDBMovie>> {
+    return this.fetch<TMDBPaginatedResponse<TMDBMovie>>(
+      `/movie/${movieId}/recommendations`,
+      { page: page.toString() },
+    );
+  }
+
   // Watch Providers
   async getMovieWatchProviders(movieId: number): Promise<TMDBWatchProvidersResponse> {
     return this.fetch<TMDBWatchProvidersResponse>(`/movie/${movieId}/watch/providers`);

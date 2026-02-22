@@ -280,6 +280,28 @@ export async function getSimilarMoviesData(movieId: number, limit = 20): Promise
   }
 }
 
+export async function getRecommendedMoviesData(movieId: number, limit = 20): Promise<SimilarMovie[]> {
+  try {
+    const response = await tmdb.getMovieRecommendations(movieId);
+
+    return response.results
+      .filter((movie) => movie.poster_path)
+      .slice(0, limit)
+      .map((movie) => ({
+        id: movie.id,
+        title: movie.title,
+        posterUrl: getPosterUrl(movie.poster_path, "medium"),
+        backdropUrl: getBackdropUrl(movie.backdrop_path, "large"),
+        releaseYear: movie.release_date ? movie.release_date.split("-")[0] : "",
+        voteAverage: Math.round(movie.vote_average * 10) / 10,
+        overview: movie.overview,
+      }));
+  } catch (error) {
+    console.error("Failed to fetch recommended movies:", error);
+    return [];
+  }
+}
+
 export async function getMovieInfoData(movieId: number): Promise<MovieInfo> {
   try {
     const [details, releaseDates, watchProvidersResponse] = await Promise.all([

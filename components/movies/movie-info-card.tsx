@@ -17,18 +17,18 @@ export function MovieInfoCard({ info }: MovieInfoCardProps) {
   return (
     <div
       className={cn(
-        "sticky top-24 rounded-2xl p-5 space-y-6",
+        "sticky top-24 rounded-2xl p-5 space-y-5",
         "bg-black/80 backdrop-blur-xl shadow-xl ring-2 ring-white/10",
       )}
     >
       {/* Spoken Languages */}
       {info.spokenLanguages.length > 0 && (
         <div>
-          <h3 className="text-xs font-medium text-white/40 uppercase tracking-wide mb-2">
+          <h3 className="text-xs font-medium text-white/40 uppercase tracking-wide mb-1">
             Spoken Languages
           </h3>
-          <p className="text-sm text-white">
-            {info.spokenLanguages.slice(0, 3).join(", ")}
+          <p className="text-sm text-white line-clamp-1">
+            {info.spokenLanguages.join(", ")}
           </p>
         </div>
       )}
@@ -36,10 +36,10 @@ export function MovieInfoCard({ info }: MovieInfoCardProps) {
       {/* Age Rating */}
       {info.ageRating && (
         <div>
-          <h3 className="text-xs font-medium text-white/40 uppercase tracking-wide mb-2">
+          <h3 className="text-xs font-medium text-white/40 uppercase tracking-wide mb-1">
             Age Rating
           </h3>
-          <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-white/10 text-sm text-white font-medium">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-white/10 text-xs text-white font-medium">
             {info.ageRating}
           </span>
         </div>
@@ -48,24 +48,24 @@ export function MovieInfoCard({ info }: MovieInfoCardProps) {
       {/* Watch Providers */}
       {hasProviders && info.watchProviders && (
         <div>
-          <h3 className="text-xs font-medium text-white/40 uppercase tracking-wide mb-3">
+          <h3 className="text-xs font-medium text-white/40 uppercase tracking-wide mb-2">
             Where to Watch
           </h3>
 
           {info.watchProviders.stream.length > 0 && (
-            <div className="mb-3">
-              <p className="text-xs text-white/50 mb-2">Stream</p>
-              <div className="flex flex-wrap gap-2">
+            <div className="mb-2">
+              <p className="text-xs text-white/50 mb-1.5">Stream</p>
+              <div className="flex flex-wrap gap-1.5">
                 {info.watchProviders.stream.map((provider) => (
                   <div
                     key={provider.name}
-                    className="relative size-8 rounded-lg overflow-hidden ring-1 ring-white/10"
+                    className="relative size-7 rounded-lg overflow-hidden ring-1 ring-white/10"
                   >
                     <Image
                       src={provider.logoUrl}
                       alt={provider.name}
                       fill
-                      sizes="32px"
+                      sizes="28px"
                       className="object-cover"
                     />
                   </div>
@@ -76,18 +76,18 @@ export function MovieInfoCard({ info }: MovieInfoCardProps) {
 
           {info.watchProviders.rent.length > 0 && (
             <div>
-              <p className="text-xs text-white/50 mb-2">Rent</p>
-              <div className="flex flex-wrap gap-2">
+              <p className="text-xs text-white/50 mb-1.5">Rent</p>
+              <div className="flex flex-wrap gap-1.5">
                 {info.watchProviders.rent.map((provider) => (
                   <div
                     key={provider.name}
-                    className="relative size-8 rounded-lg overflow-hidden ring-1 ring-white/10"
+                    className="relative size-7 rounded-lg overflow-hidden ring-1 ring-white/10"
                   >
                     <Image
                       src={provider.logoUrl}
                       alt={provider.name}
                       fill
-                      sizes="32px"
+                      sizes="28px"
                       className="object-cover"
                     />
                   </div>
@@ -101,33 +101,12 @@ export function MovieInfoCard({ info }: MovieInfoCardProps) {
       {/* Production Companies */}
       {info.productionCompanies.length > 0 && (
         <div>
-          <h3 className="text-xs font-medium text-white/40 uppercase tracking-wide mb-3">
+          <h3 className="text-xs font-medium text-white/40 uppercase tracking-wide mb-1">
             Production
           </h3>
-          <div className="space-y-2">
-            {info.productionCompanies.slice(0, 3).map((company) => (
-              <div key={company.id} className="flex items-center gap-3">
-                {company.logoUrl ? (
-                  <div className="relative size-8 rounded-lg overflow-hidden ring-1 ring-white/10 bg-white/5">
-                    <Image
-                      src={company.logoUrl}
-                      alt={company.name}
-                      fill
-                      sizes="32px"
-                      className="object-contain"
-                    />
-                  </div>
-                ) : (
-                  <div className="size-8 rounded-lg ring-1 ring-white/10 bg-white/5 flex items-center justify-center">
-                    <span className="text-xs text-white/40">
-                      {company.name.charAt(0)}
-                    </span>
-                  </div>
-                )}
-                <p className="text-sm text-white/80">{company.name}</p>
-              </div>
-            ))}
-          </div>
+          <p className="text-sm text-white line-clamp-1">
+            {info.productionCompanies.map((c) => c.name).join(", ")}
+          </p>
         </div>
       )}
     </div>

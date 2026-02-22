@@ -5,13 +5,13 @@ import { MovieHero } from "@/components/movies/movie-hero";
 import { MovieTrailers } from "@/components/movies/movie-trailers";
 import { MovieCollectionSection } from "@/components/movies/movie-collection";
 import { MovieCreditsSection } from "@/components/movies/movie-credits";
-import { SimilarMoviesSection } from "@/components/movies/similar-movies";
+import { RecommendedMoviesSection } from "@/components/movies/recommended-movies";
 import {
   getMovieDetailsData,
   getMovieVideosData,
   getMovieCreditsData,
   getMovieCollectionData,
-  getSimilarMoviesData,
+  getRecommendedMoviesData,
   getMovieInfoData,
 } from "@/lib/movie-data";
 
@@ -30,11 +30,11 @@ async function MovieContent({ id }: { id: number }) {
     notFound();
   }
 
-  const [videos, credits, collection, similarMovies, movieInfo] = await Promise.all([
+  const [videos, credits, collection, recommendedMovies, movieInfo] = await Promise.all([
     getMovieVideosData(id),
     getMovieCreditsData(id),
     movie.collectionId ? getMovieCollectionData(movie.collectionId) : Promise.resolve(null),
-    getSimilarMoviesData(id),
+    getRecommendedMoviesData(id),
     getMovieInfoData(id),
   ]);
 
@@ -49,7 +49,7 @@ async function MovieContent({ id }: { id: number }) {
         {(credits.cast.length > 0 || credits.crew.length > 0) && (
           <MovieCreditsSection credits={credits} />
         )}
-        {similarMovies.length > 0 && <SimilarMoviesSection movies={similarMovies} />}
+        {recommendedMovies.length > 0 && <RecommendedMoviesSection movies={recommendedMovies} />}
       </div>
     </>
   );
