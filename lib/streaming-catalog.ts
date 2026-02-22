@@ -1,4 +1,4 @@
-import { tmdb } from "@/lib/tmdb";
+import { tmdb, getLogoUrl } from "@/lib/tmdb";
 
 const STREAMING_CATALOG_BASE_URL = "https://7a82163c306e-stremio-netflix-catalog-addon.baby-beamup.club";
 
@@ -73,7 +73,7 @@ async function getProvidersWithLogos(): Promise<Map<string, StreamingProvider>> 
         providers.set(providerId, {
           id: providerId,
           name: tmdbProvider.provider_name,
-          logoUrl: `https://image.tmdb.org/t/p/w92${tmdbProvider.logo_path}`,
+          logoUrl: getLogoUrl(tmdbProvider.logo_path, "w185"),
           tmdbProviderId: tmdbProvider.provider_id,
         });
       } else {

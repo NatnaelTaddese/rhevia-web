@@ -149,7 +149,7 @@ export async function getShowDetailsData(tvId: number): Promise<ShowDetails | nu
       name: details.name,
       tagline: details.tagline,
       overview: details.overview,
-      backdropUrl: getBackdropUrl(details.backdrop_path, "original"),
+      backdropUrl: getBackdropUrl(details.backdrop_path, "large"),
       posterUrl: getPosterUrl(details.poster_path, "large"),
       logoUrl: logo ? getLogoUrl(logo.file_path, "w500") : null,
       firstAirDate: details.first_air_date,
@@ -236,7 +236,7 @@ export async function getShowCreditsData(tvId: number): Promise<ShowCredits> {
           name: member.name,
           character: member.character,
           profileUrl: member.profile_path
-            ? `https://image.tmdb.org/t/p/w185${member.profile_path}`
+            ? getPosterUrl(member.profile_path, "medium")
             : null,
           order: member.order,
         })),
@@ -251,7 +251,7 @@ export async function getShowCreditsData(tvId: number): Promise<ShowCredits> {
           job: member.job,
           department: member.department,
           profileUrl: member.profile_path
-            ? `https://image.tmdb.org/t/p/w185${member.profile_path}`
+            ? getPosterUrl(member.profile_path, "medium")
             : null,
         })),
     };
@@ -317,12 +317,11 @@ export async function getShowInfoData(tvId: number): Promise<ShowInfo> {
     const ageRating = usRating?.rating || null;
 
     const usProviders = watchProvidersResponse?.results?.["US"];
-    const imageUrlPrefix = "https://image.tmdb.org/t/p/w92";
 
     const formatProviders = (providers: TMDBWatchProvider[] | undefined): WatchProvider[] =>
       (providers || []).map((p) => ({
         name: p.provider_name,
-        logoUrl: `${imageUrlPrefix}${p.logo_path}`,
+        logoUrl: getLogoUrl(p.logo_path, "w185") as string,
       }));
 
     const formattedProviders: ShowWatchProviders | null = usProviders

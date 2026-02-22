@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { usePrefetchMovie } from "@/hooks/use-prefetch-movie";
 
 export interface MovieCardData {
   id: number;
@@ -18,6 +19,8 @@ interface MovieCardProps {
 }
 
 export function MovieCard({ movie, className }: MovieCardProps) {
+  const { prefetchMovie } = usePrefetchMovie();
+
   return (
     <Link
       href={`/movies/${movie.id}`}
@@ -25,6 +28,8 @@ export function MovieCard({ movie, className }: MovieCardProps) {
         "group relative block shrink-0 hover:scale-105 transition-all ease-out",
         className,
       )}
+      onMouseEnter={() => prefetchMovie(movie.id)}
+      onTouchStart={() => prefetchMovie(movie.id)}
     >
       <div
         className={cn(

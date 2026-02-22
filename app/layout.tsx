@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { DM_Sans, Geist, Geist_Mono } from "next/font/google";
 import localFont from "next/font/local";
 import { ThemeProvider } from "@/components/theme-provider";
+import { ReactQueryProvider } from "@/components/providers/react-query-provider";
 import "./globals.css";
 
 const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-sans" });
@@ -44,8 +45,10 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
-          <SpeedInsights />
+          <ReactQueryProvider>
+            {children}
+            <SpeedInsights />
+          </ReactQueryProvider>
         </ThemeProvider>
       </body>
     </html>

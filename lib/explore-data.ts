@@ -70,7 +70,7 @@ export async function getTop10Movies(): Promise<Top10Item[]> {
           title: movie.title,
           overview: movie.overview,
           posterUrl: getPosterUrl(movie.poster_path, "large") as string,
-          backdropUrl: getBackdropUrl(movie.backdrop_path, "original") as string,
+          backdropUrl: getBackdropUrl(movie.backdrop_path, "large") as string,
           logoUrl,
           year: movie.release_date ? movie.release_date.split("-")[0] : "",
           voteAverage: Math.round(movie.vote_average * 10) / 10,
@@ -117,7 +117,7 @@ export async function getTop10TVShows(): Promise<Top10Item[]> {
           title: show.name,
           overview: show.overview,
           posterUrl: getPosterUrl(show.poster_path, "large") as string,
-          backdropUrl: getBackdropUrl(show.backdrop_path, "original") as string,
+          backdropUrl: getBackdropUrl(show.backdrop_path, "large") as string,
           logoUrl,
           year: show.first_air_date ? show.first_air_date.split("-")[0] : "",
           voteAverage: Math.round(show.vote_average * 10) / 10,
@@ -167,7 +167,7 @@ export async function getTrendingMovies(limit = 10): Promise<HeroMovie[]> {
           overview: movie.overview,
           backdropUrl: getBackdropUrl(
             movie.backdrop_path,
-            "original",
+            "large",
           ) as string,
           logoUrl,
           releaseYear: movie.release_date
@@ -217,7 +217,7 @@ export async function getPopularMovies(limit = 20): Promise<HeroMovie[]> {
           overview: movie.overview,
           backdropUrl: getBackdropUrl(
             movie.backdrop_path,
-            "original",
+            "large",
           ) as string,
           logoUrl,
           releaseYear: movie.release_date
@@ -267,7 +267,7 @@ export async function getNowPlayingMovies(limit = 20): Promise<HeroMovie[]> {
           overview: movie.overview,
           backdropUrl: getBackdropUrl(
             movie.backdrop_path,
-            "original",
+            "large",
           ) as string,
           logoUrl,
           releaseYear: movie.release_date

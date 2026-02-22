@@ -13,6 +13,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { HeroMovie } from "@/lib/explore-data";
 import { cn } from "@/lib/utils";
+import { usePrefetchMovie } from "@/hooks/use-prefetch-movie";
 
 interface HeroCarouselProps {
   movies: HeroMovie[];
@@ -30,6 +31,11 @@ export function HeroCarousel({
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const currentMovie = movies[currentIndex];
+  const { prefetchMovie } = usePrefetchMovie();
+
+  const prefetchCurrentMovie = useCallback(() => {
+    prefetchMovie(currentMovie.id);
+  }, [currentMovie.id, prefetchMovie]);
 
   // Preload adjacent images
   useEffect(() => {
@@ -112,8 +118,12 @@ export function HeroCarousel({
   return (
     <section
       className="relative w-full h-[90vh] sm:h-[70vh] sm:min-h-225 max-h-300 overflow-hidden"
-      onMouseEnter={() => setIsPaused(true)}
+      onMouseEnter={() => {
+        setIsPaused(true);
+        prefetchCurrentMovie();
+      }}
       onMouseLeave={() => setIsPaused(false)}
+      onTouchStart={prefetchCurrentMovie}
       aria-roledescription="carousel"
       aria-label="Trending movies"
     >

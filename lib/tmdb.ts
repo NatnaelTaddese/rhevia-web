@@ -1,6 +1,32 @@
 const TMDB_API_BASE_URL = "https://api.themoviedb.org/3";
 const TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p";
 
+// Cache TTL configuration (in seconds)
+// Different data types have different freshness requirements
+const CACHE_TTL = {
+  // Static data - rarely changes
+  movieDetails: 172800, // 48 hours
+  showDetails: 172800, // 48 hours
+  credits: 86400, // 24 hours
+  images: 86400, // 24 hours (posters, backdrops, logos)
+  videos: 86400, // 24 hours
+  collection: 172800, // 48 hours
+  
+  // Semi-static data - changes occasionally
+  similar: 43200, // 12 hours
+  recommended: 43200, // 12 hours
+  
+  // Dynamic data - changes more frequently
+  trending: 7200, // 2 hours
+  popular: 14400, // 4 hours
+  nowPlaying: 7200, // 2 hours
+  onTheAir: 7200, // 2 hours
+  topRated: 28800, // 8 hours
+  upcoming: 28800, // 8 hours
+  watchProviders: 86400, // 24 hours
+  genres: 604800, // 1 week
+} as const;
+
 // Image size configurations
 export const TMDB_IMAGE_SIZES = {
   backdrop: {
@@ -184,6 +210,12 @@ export interface TMDBMovieDetails {
   origin_country: string[];
   original_language: string;
   adult: boolean;
+  belongs_to_collection: {
+    id: number;
+    name: string;
+    poster_path: string | null;
+    backdrop_path: string | null;
+  } | null;
 }
 
 export interface TMDBVideo {
@@ -295,40 +327,6 @@ export interface TMDBGenresResponse {
   genres: TMDBGenre[];
 }
 
-export interface TMDBMovieDetails {
-  id: number;
-  title: string;
-  original_title: string;
-  tagline: string;
-  overview: string;
-  poster_path: string | null;
-  backdrop_path: string | null;
-  release_date: string;
-  runtime: number;
-  vote_average: number;
-  vote_count: number;
-  popularity: number;
-  budget: number;
-  revenue: number;
-  status: string;
-  genres: TMDBGenre[];
-  belongs_to_collection: TMDBCollection | null;
-  production_companies: {
-    id: number;
-    name: string;
-    logo_path: string | null;
-    origin_country: string;
-  }[];
-  spoken_languages: {
-    english_name: string;
-    iso_639_1: string;
-    name: string;
-  }[];
-  origin_country: string[];
-  original_language: string;
-  adult: boolean;
-}
-
 // Helper functions
 export function getImageUrl(
   path: string | null,
@@ -365,6 +363,10 @@ export function getLogoUrl(
   return `${TMDB_IMAGE_BASE_URL}/${size}${path}`;
 }
 
+// In-flight request deduplication cache
+// Prevents duplicate API calls when multiple components request the same data
+const inFlightRequests = new Map<string, Promise<unknown>>();
+
 // API client
 class TMDBClient {
   private get accessToken(): string {
@@ -377,30 +379,55 @@ class TMDBClient {
     return token;
   }
 
-  private async fetch<T>(
+  private async fetchWithDeduplication<T>(
     endpoint: string,
     params: Record<string, string> = {},
+    cacheDuration: number,
   ): Promise<T> {
+    // Create a unique cache key from endpoint + params
     const url = new URL(`${TMDB_API_BASE_URL}${endpoint}`);
-
-    // Add query params
     Object.entries(params).forEach(([key, value]) => {
       url.searchParams.append(key, value);
     });
+    const cacheKey = url.toString();
 
-    // Create AbortController for timeout
+    // Check if there's already an in-flight request for this URL
+    const existingRequest = inFlightRequests.get(cacheKey);
+    if (existingRequest) {
+      return existingRequest as Promise<T>;
+    }
+
+    // Create the request
+    const requestPromise = this.executeFetch<T>(cacheKey, cacheDuration);
+
+    // Store in in-flight cache
+    inFlightRequests.set(cacheKey, requestPromise);
+
+    // Clean up after request completes (success or failure)
+    requestPromise
+      .then(() => {
+        inFlightRequests.delete(cacheKey);
+      })
+      .catch(() => {
+        inFlightRequests.delete(cacheKey);
+      });
+
+    return requestPromise;
+  }
+
+  private async executeFetch<T>(url: string, cacheDuration: number): Promise<T> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
     try {
-      const response = await fetch(url.toString(), {
+      const response = await fetch(url, {
         headers: {
           Authorization: `Bearer ${this.accessToken}`,
           "Content-Type": "application/json",
         },
         signal: controller.signal,
         next: {
-          revalidate: 3600, // Cache for 1 hour
+          revalidate: cacheDuration, // Use dynamic cache duration based on data type
         },
       });
 
@@ -418,7 +445,6 @@ class TMDBClient {
             `TMDB API request timed out after 10 seconds. Please check your network connection.`,
           );
         }
-        // Re-throw with more context
         throw new Error(`TMDB API request failed: ${error.message}`);
       }
       throw error;
@@ -427,14 +453,15 @@ class TMDBClient {
     }
   }
 
-  // Trending
+  // Trending (dynamic - 2 hours)
   async getTrendingMovies(
     timeWindow: "day" | "week" = "week",
     page = 1,
   ): Promise<TMDBPaginatedResponse<TMDBMovie>> {
-    return this.fetch<TMDBPaginatedResponse<TMDBMovie>>(
+    return this.fetchWithDeduplication<TMDBPaginatedResponse<TMDBMovie>>(
       `/trending/movie/${timeWindow}`,
       { page: page.toString() },
+      CACHE_TTL.trending,
     );
   }
 
@@ -442,224 +469,325 @@ class TMDBClient {
     timeWindow: "day" | "week" = "week",
     page = 1,
   ): Promise<TMDBPaginatedResponse<TMDBTVShow>> {
-    return this.fetch<TMDBPaginatedResponse<TMDBTVShow>>(
+    return this.fetchWithDeduplication<TMDBPaginatedResponse<TMDBTVShow>>(
       `/trending/tv/${timeWindow}`,
       { page: page.toString() },
+      CACHE_TTL.trending,
     );
   }
 
-  // Popular
+  // Popular (4 hours)
   async getPopularMovies(page = 1): Promise<TMDBPaginatedResponse<TMDBMovie>> {
-    return this.fetch<TMDBPaginatedResponse<TMDBMovie>>("/movie/popular", {
-      page: page.toString(),
-    });
+    return this.fetchWithDeduplication<TMDBPaginatedResponse<TMDBMovie>>(
+      "/movie/popular",
+      { page: page.toString() },
+      CACHE_TTL.popular,
+    );
   }
 
   async getPopularTVShows(
     page = 1,
   ): Promise<TMDBPaginatedResponse<TMDBTVShow>> {
-    return this.fetch<TMDBPaginatedResponse<TMDBTVShow>>("/tv/popular", {
-      page: page.toString(),
-    });
+    return this.fetchWithDeduplication<TMDBPaginatedResponse<TMDBTVShow>>(
+      "/tv/popular",
+      { page: page.toString() },
+      CACHE_TTL.popular,
+    );
   }
 
-  // Now Playing / On The Air
+  // Now Playing / On The Air (2 hours)
   async getNowPlayingMovies(
     page = 1,
   ): Promise<TMDBPaginatedResponse<TMDBMovie>> {
-    return this.fetch<TMDBPaginatedResponse<TMDBMovie>>("/movie/now_playing", {
-      page: page.toString(),
-    });
+    return this.fetchWithDeduplication<TMDBPaginatedResponse<TMDBMovie>>(
+      "/movie/now_playing",
+      { page: page.toString() },
+      CACHE_TTL.nowPlaying,
+    );
   }
 
   async getOnTheAirTVShows(
     page = 1,
   ): Promise<TMDBPaginatedResponse<TMDBTVShow>> {
-    return this.fetch<TMDBPaginatedResponse<TMDBTVShow>>("/tv/on_the_air", {
-      page: page.toString(),
-    });
+    return this.fetchWithDeduplication<TMDBPaginatedResponse<TMDBTVShow>>(
+      "/tv/on_the_air",
+      { page: page.toString() },
+      CACHE_TTL.onTheAir,
+    );
   }
 
-  // Top Rated
+  // Top Rated (8 hours)
   async getTopRatedMovies(page = 1): Promise<TMDBPaginatedResponse<TMDBMovie>> {
-    return this.fetch<TMDBPaginatedResponse<TMDBMovie>>("/movie/top_rated", {
-      page: page.toString(),
-    });
+    return this.fetchWithDeduplication<TMDBPaginatedResponse<TMDBMovie>>(
+      "/movie/top_rated",
+      { page: page.toString() },
+      CACHE_TTL.topRated,
+    );
   }
 
   async getTopRatedTVShows(
     page = 1,
   ): Promise<TMDBPaginatedResponse<TMDBTVShow>> {
-    return this.fetch<TMDBPaginatedResponse<TMDBTVShow>>("/tv/top_rated", {
-      page: page.toString(),
-    });
+    return this.fetchWithDeduplication<TMDBPaginatedResponse<TMDBTVShow>>(
+      "/tv/top_rated",
+      { page: page.toString() },
+      CACHE_TTL.topRated,
+    );
   }
 
-  // Upcoming
+  // Upcoming (8 hours)
   async getUpcomingMovies(page = 1): Promise<TMDBPaginatedResponse<TMDBMovie>> {
-    return this.fetch<TMDBPaginatedResponse<TMDBMovie>>("/movie/upcoming", {
-      page: page.toString(),
-    });
+    return this.fetchWithDeduplication<TMDBPaginatedResponse<TMDBMovie>>(
+      "/movie/upcoming",
+      { page: page.toString() },
+      CACHE_TTL.upcoming,
+    );
   }
 
-  // Images (logos, backdrops, posters)
+  // Images (24 hours)
   async getMovieImages(
     movieId: number,
     includeLanguages = "en,null",
   ): Promise<TMDBImagesResponse> {
-    return this.fetch<TMDBImagesResponse>(`/movie/${movieId}/images`, {
-      include_image_language: includeLanguages,
-    });
+    return this.fetchWithDeduplication<TMDBImagesResponse>(
+      `/movie/${movieId}/images`,
+      { include_image_language: includeLanguages },
+      CACHE_TTL.images,
+    );
   }
 
   async getTVImages(
     tvId: number,
     includeLanguages = "en,null",
   ): Promise<TMDBImagesResponse> {
-    return this.fetch<TMDBImagesResponse>(`/tv/${tvId}/images`, {
-      include_image_language: includeLanguages,
-    });
+    return this.fetchWithDeduplication<TMDBImagesResponse>(
+      `/tv/${tvId}/images`,
+      { include_image_language: includeLanguages },
+      CACHE_TTL.images,
+    );
   }
 
-  // Genres
+  // Genres (1 week)
   async getMovieGenres(): Promise<TMDBGenresResponse> {
-    return this.fetch<TMDBGenresResponse>("/genre/movie/list");
+    return this.fetchWithDeduplication<TMDBGenresResponse>(
+      "/genre/movie/list",
+      {},
+      CACHE_TTL.genres,
+    );
   }
 
   async getTVGenres(): Promise<TMDBGenresResponse> {
-    return this.fetch<TMDBGenresResponse>("/genre/tv/list");
+    return this.fetchWithDeduplication<TMDBGenresResponse>(
+      "/genre/tv/list",
+      {},
+      CACHE_TTL.genres,
+    );
   }
 
-  // Search
+  // Search (no cache - always fresh)
   async searchMovies(
     query: string,
     page = 1,
   ): Promise<TMDBPaginatedResponse<TMDBMovie>> {
-    return this.fetch<TMDBPaginatedResponse<TMDBMovie>>("/search/movie", {
-      query,
-      page: page.toString(),
-    });
+    return this.fetchWithDeduplication<TMDBPaginatedResponse<TMDBMovie>>(
+      "/search/movie",
+      { query, page: page.toString() },
+      0, // No cache for search
+    );
   }
 
   async searchTVShows(
     query: string,
     page = 1,
   ): Promise<TMDBPaginatedResponse<TMDBTVShow>> {
-    return this.fetch<TMDBPaginatedResponse<TMDBTVShow>>("/search/tv", {
-      query,
-      page: page.toString(),
-    });
+    return this.fetchWithDeduplication<TMDBPaginatedResponse<TMDBTVShow>>(
+      "/search/tv",
+      { query, page: page.toString() },
+      0, // No cache for search
+    );
   }
 
-  // TV Show Details
+  // TV Show Details (48 hours)
   async getTVShowDetails(tvId: number): Promise<TMDBTVShowDetails> {
-    return this.fetch<TMDBTVShowDetails>(`/tv/${tvId}`);
+    return this.fetchWithDeduplication<TMDBTVShowDetails>(
+      `/tv/${tvId}`,
+      {},
+      CACHE_TTL.showDetails,
+    );
   }
 
-  // Movie Details
+  // Movie Details (48 hours)
   async getMovieDetails(movieId: number): Promise<TMDBMovieDetails> {
-    return this.fetch<TMDBMovieDetails>(`/movie/${movieId}`);
+    return this.fetchWithDeduplication<TMDBMovieDetails>(
+      `/movie/${movieId}`,
+      {},
+      CACHE_TTL.movieDetails,
+    );
   }
 
-  // Movie Videos (trailers, etc.)
+  // Movie Videos (24 hours)
   async getMovieVideos(movieId: number): Promise<TMDBVideosResponse> {
-    return this.fetch<TMDBVideosResponse>(`/movie/${movieId}/videos`);
+    return this.fetchWithDeduplication<TMDBVideosResponse>(
+      `/movie/${movieId}/videos`,
+      {},
+      CACHE_TTL.videos,
+    );
   }
 
-  // Movie Credits (cast & crew)
+  // Movie Credits (24 hours)
   async getMovieCredits(movieId: number): Promise<TMDBCreditsResponse> {
-    return this.fetch<TMDBCreditsResponse>(`/movie/${movieId}/credits`);
+    return this.fetchWithDeduplication<TMDBCreditsResponse>(
+      `/movie/${movieId}/credits`,
+      {},
+      CACHE_TTL.credits,
+    );
   }
 
-  // Collection
+  // Collection (48 hours)
   async getCollection(collectionId: number): Promise<TMDBCollection> {
-    return this.fetch<TMDBCollection>(`/collection/${collectionId}`);
+    return this.fetchWithDeduplication<TMDBCollection>(
+      `/collection/${collectionId}`,
+      {},
+      CACHE_TTL.collection,
+    );
   }
 
-  // Similar Movies
+  // Similar Movies (12 hours)
   async getSimilarMovies(
     movieId: number,
     page = 1,
   ): Promise<TMDBPaginatedResponse<TMDBMovie>> {
-    return this.fetch<TMDBPaginatedResponse<TMDBMovie>>(
+    return this.fetchWithDeduplication<TMDBPaginatedResponse<TMDBMovie>>(
       `/movie/${movieId}/similar`,
       { page: page.toString() },
+      CACHE_TTL.similar,
     );
   }
 
-  // Movie Recommendations
+  // Movie Recommendations (12 hours)
   async getMovieRecommendations(
     movieId: number,
     page = 1,
   ): Promise<TMDBPaginatedResponse<TMDBMovie>> {
-    return this.fetch<TMDBPaginatedResponse<TMDBMovie>>(
+    return this.fetchWithDeduplication<TMDBPaginatedResponse<TMDBMovie>>(
       `/movie/${movieId}/recommendations`,
       { page: page.toString() },
+      CACHE_TTL.recommended,
     );
   }
 
-  // Watch Providers
-  async getMovieWatchProviders(movieId: number): Promise<TMDBWatchProvidersResponse> {
-    return this.fetch<TMDBWatchProvidersResponse>(`/movie/${movieId}/watch/providers`);
+  // Watch Providers (24 hours)
+  async getMovieWatchProviders(
+    movieId: number,
+  ): Promise<TMDBWatchProvidersResponse> {
+    return this.fetchWithDeduplication<TMDBWatchProvidersResponse>(
+      `/movie/${movieId}/watch/providers`,
+      {},
+      CACHE_TTL.watchProviders,
+    );
   }
 
-  // Release Dates (for age ratings)
-  async getMovieReleaseDates(movieId: number): Promise<TMDBReleaseDatesResponse> {
-    return this.fetch<TMDBReleaseDatesResponse>(`/movie/${movieId}/release_dates`);
+  // Release Dates (24 hours)
+  async getMovieReleaseDates(
+    movieId: number,
+  ): Promise<TMDBReleaseDatesResponse> {
+    return this.fetchWithDeduplication<TMDBReleaseDatesResponse>(
+      `/movie/${movieId}/release_dates`,
+      {},
+      CACHE_TTL.movieDetails,
+    );
   }
 
-  // TV Show Videos
+  // TV Show Videos (24 hours)
   async getTVVideos(tvId: number): Promise<TMDBVideosResponse> {
-    return this.fetch<TMDBVideosResponse>(`/tv/${tvId}/videos`);
+    return this.fetchWithDeduplication<TMDBVideosResponse>(
+      `/tv/${tvId}/videos`,
+      {},
+      CACHE_TTL.videos,
+    );
   }
 
-  // TV Show Credits
+  // TV Show Credits (24 hours)
   async getTVCredits(tvId: number): Promise<TMDBCreditsResponse> {
-    return this.fetch<TMDBCreditsResponse>(`/tv/${tvId}/credits`);
+    return this.fetchWithDeduplication<TMDBCreditsResponse>(
+      `/tv/${tvId}/credits`,
+      {},
+      CACHE_TTL.credits,
+    );
   }
 
-  // Similar TV Shows
+  // Similar TV Shows (12 hours)
   async getSimilarTVShows(
     tvId: number,
     page = 1,
   ): Promise<TMDBPaginatedResponse<TMDBTVShow>> {
-    return this.fetch<TMDBPaginatedResponse<TMDBTVShow>>(
+    return this.fetchWithDeduplication<TMDBPaginatedResponse<TMDBTVShow>>(
       `/tv/${tvId}/similar`,
       { page: page.toString() },
+      CACHE_TTL.similar,
     );
   }
 
-  // TV Show Recommendations
+  // TV Show Recommendations (12 hours)
   async getTVRecommendations(
     tvId: number,
     page = 1,
   ): Promise<TMDBPaginatedResponse<TMDBTVShow>> {
-    return this.fetch<TMDBPaginatedResponse<TMDBTVShow>>(
+    return this.fetchWithDeduplication<TMDBPaginatedResponse<TMDBTVShow>>(
       `/tv/${tvId}/recommendations`,
       { page: page.toString() },
+      CACHE_TTL.recommended,
     );
   }
 
-  // TV Watch Providers
-  async getTVWatchProviders(tvId: number): Promise<TMDBWatchProvidersResponse> {
-    return this.fetch<TMDBWatchProvidersResponse>(`/tv/${tvId}/watch/providers`);
+  // TV Watch Providers (24 hours)
+  async getTVWatchProviders(
+    tvId: number,
+  ): Promise<TMDBWatchProvidersResponse> {
+    return this.fetchWithDeduplication<TMDBWatchProvidersResponse>(
+      `/tv/${tvId}/watch/providers`,
+      {},
+      CACHE_TTL.watchProviders,
+    );
   }
 
-  // TV Content Ratings (for age ratings)
-  async getTVContentRatings(tvId: number): Promise<TMDBContentRatingsResponse> {
-    return this.fetch<TMDBContentRatingsResponse>(`/tv/${tvId}/content_ratings`);
+  // TV Content Ratings (48 hours)
+  async getTVContentRatings(
+    tvId: number,
+  ): Promise<TMDBContentRatingsResponse> {
+    return this.fetchWithDeduplication<TMDBContentRatingsResponse>(
+      `/tv/${tvId}/content_ratings`,
+      {},
+      CACHE_TTL.showDetails,
+    );
   }
 
-  // TV Season Details
-  async getTVSeasonDetails(tvId: number, seasonNumber: number): Promise<TMDBSeasonDetails> {
-    return this.fetch<TMDBSeasonDetails>(`/tv/${tvId}/season/${seasonNumber}`);
+  // TV Season Details (48 hours)
+  async getTVSeasonDetails(
+    tvId: number,
+    seasonNumber: number,
+  ): Promise<TMDBSeasonDetails> {
+    return this.fetchWithDeduplication<TMDBSeasonDetails>(
+      `/tv/${tvId}/season/${seasonNumber}`,
+      {},
+      CACHE_TTL.showDetails,
+    );
   }
 
-  // Watch Providers List
-  async getWatchProvidersList(type: "movie" | "tv" = "movie"): Promise<TMDBProvidersListResponse> {
-    return this.fetch<TMDBProvidersListResponse>(`/watch/providers/${type}`, { watch_region: "US" });
+  // Watch Providers List (24 hours)
+  async getWatchProvidersList(
+    type: "movie" | "tv" = "movie",
+  ): Promise<TMDBProvidersListResponse> {
+    return this.fetchWithDeduplication<TMDBProvidersListResponse>(
+      `/watch/providers/${type}`,
+      { watch_region: "US" },
+      CACHE_TTL.watchProviders,
+    );
   }
 }
 
 // Export singleton instance
 export const tmdb = new TMDBClient();
+
+// Export cache TTL for use in other parts of the app
+export { CACHE_TTL };

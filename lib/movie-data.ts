@@ -119,7 +119,7 @@ export async function getMovieDetailsData(movieId: number): Promise<MovieDetails
       title: details.title,
       tagline: details.tagline,
       overview: details.overview,
-      backdropUrl: getBackdropUrl(details.backdrop_path, "original"),
+      backdropUrl: getBackdropUrl(details.backdrop_path, "large"),
       posterUrl: getPosterUrl(details.poster_path, "large"),
       logoUrl: logo ? getLogoUrl(logo.file_path, "w500") : null,
       releaseDate: details.release_date,
@@ -187,7 +187,7 @@ export async function getMovieCastData(movieId: number, limit = 20): Promise<Mov
         name: member.name,
         character: member.character,
         profileUrl: member.profile_path
-          ? `https://image.tmdb.org/t/p/w185${member.profile_path}`
+          ? getPosterUrl(member.profile_path, "medium")
           : null,
         order: member.order,
       }));
@@ -210,7 +210,7 @@ export async function getMovieCreditsData(movieId: number): Promise<MovieCredits
           name: member.name,
           character: member.character,
           profileUrl: member.profile_path
-            ? `https://image.tmdb.org/t/p/w185${member.profile_path}`
+            ? getPosterUrl(member.profile_path, "medium")
             : null,
           order: member.order,
         })),
@@ -225,7 +225,7 @@ export async function getMovieCreditsData(movieId: number): Promise<MovieCredits
           job: member.job,
           department: member.department,
           profileUrl: member.profile_path
-            ? `https://image.tmdb.org/t/p/w185${member.profile_path}`
+            ? getPosterUrl(member.profile_path, "medium")
             : null,
         })),
     };
@@ -317,12 +317,10 @@ export async function getMovieInfoData(movieId: number): Promise<MovieInfo> {
 
     // Get US watch providers
     const usProviders = watchProvidersResponse?.results?.["US"];
-    const imageUrlPrefix = "https://image.tmdb.org/t/p/w92";
-
     const formatProviders = (providers: TMDBWatchProvider[] | undefined): WatchProvider[] =>
       (providers || []).map((p) => ({
         name: p.provider_name,
-        logoUrl: `${imageUrlPrefix}${p.logo_path}`,
+        logoUrl: getLogoUrl(p.logo_path, "w185") as string,
       }));
 
     const formattedProviders: MovieWatchProviders | null = usProviders

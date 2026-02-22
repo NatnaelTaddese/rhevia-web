@@ -1,6 +1,6 @@
 "use server";
 
-import { tmdb } from "@/lib/tmdb";
+import { tmdb, getBackdropUrl } from "@/lib/tmdb";
 import type { SeasonEpisodes } from "@/lib/show-data";
 
 export async function getSeasonEpisodesData(tvId: number, seasonNumber: number): Promise<SeasonEpisodes | null> {
@@ -16,7 +16,7 @@ export async function getSeasonEpisodesData(tvId: number, seasonNumber: number):
         overview: ep.overview,
         episodeNumber: ep.episode_number,
         seasonNumber: ep.season_number,
-        stillUrl: ep.still_path ? `https://image.tmdb.org/t/p/w300${ep.still_path}` : null,
+        stillUrl: getBackdropUrl(ep.still_path, "medium"),
         airDate: ep.air_date,
         runtime: ep.runtime,
         voteAverage: Math.round(ep.vote_average * 10) / 10,

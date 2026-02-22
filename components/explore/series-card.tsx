@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { usePrefetchShow } from "@/hooks/use-prefetch-show";
 
 export interface SeriesCardData {
   id: number;
@@ -18,6 +19,8 @@ interface SeriesCardProps {
 }
 
 export function SeriesCard({ series, className }: SeriesCardProps) {
+  const { prefetchShow } = usePrefetchShow();
+
   return (
     <Link
       href={`/shows/${series.id}`}
@@ -25,6 +28,8 @@ export function SeriesCard({ series, className }: SeriesCardProps) {
         "group relative block shrink-0 hover:scale-105 transition-all ease-out",
         className,
       )}
+      onMouseEnter={() => prefetchShow(series.id)}
+      onTouchStart={() => prefetchShow(series.id)}
     >
       <div
         className={cn(

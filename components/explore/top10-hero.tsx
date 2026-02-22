@@ -13,6 +13,8 @@ import {
 
 import { cn } from "@/lib/utils";
 import type { Top10Item } from "@/lib/explore-data";
+import { usePrefetchMovie } from "@/hooks/use-prefetch-movie";
+import { usePrefetchShow } from "@/hooks/use-prefetch-show";
 
 interface Top10HeroProps {
   items: Top10Item[];
@@ -30,7 +32,18 @@ export function Top10Hero({
   const [isPaused, setIsPaused] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+  const { prefetchMovie } = usePrefetchMovie();
+  const { prefetchShow } = usePrefetchShow();
+
   const currentItem = items[currentIndex];
+
+  const prefetchCurrentItem = useCallback(() => {
+    if (type === "movie") {
+      prefetchMovie(currentItem.tmdbId);
+    } else {
+      prefetchShow(currentItem.tmdbId);
+    }
+  }, [currentItem.tmdbId, type, prefetchMovie, prefetchShow]);
 
   const goToSlide = useCallback(
     (index: number) => {
@@ -97,8 +110,12 @@ export function Top10Hero({
   return (
     <section
       className="relative w-full h-[90vh] sm:h-[70vh] sm:min-h-225 max-h-300 overflow-hidden"
-      onMouseEnter={() => setIsPaused(true)}
+      onMouseEnter={() => {
+        setIsPaused(true);
+        prefetchCurrentItem();
+      }}
       onMouseLeave={() => setIsPaused(false)}
+      onTouchStart={prefetchCurrentItem}
       aria-roledescription="carousel"
       aria-label="Top 10 trending"
     >
