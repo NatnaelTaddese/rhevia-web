@@ -121,12 +121,16 @@ function EpisodeCard({ episode }: { episode: SeasonEpisodes["episodes"][0] }) {
   );
 }
 
-export function ShowEpisodes({ seasons, initialSeasonData, showId }: ShowEpisodesProps) {
+export function ShowEpisodes({
+  seasons,
+  initialSeasonData,
+  showId,
+}: ShowEpisodesProps) {
   const [selectedSeason, setSelectedSeason] = useState(
-    seasons.length > 0 ? seasons[0].seasonNumber.toString() : ""
+    seasons.length > 0 ? seasons[0].seasonNumber.toString() : "",
   );
   const [seasonData, setSeasonData] = useState<Map<number, SeasonEpisodes>>(
-    new Map(initialSeasonData)
+    new Map(initialSeasonData),
   );
   const [loading, setLoading] = useState(false);
 
@@ -167,7 +171,9 @@ export function ShowEpisodes({ seasons, initialSeasonData, showId }: ShowEpisode
     if (!seasonScrollRef.current) return;
     const scrollAmount = 200;
     seasonScrollRef.current.scrollTo({
-      left: seasonScrollRef.current.scrollLeft + (direction === "left" ? -scrollAmount : scrollAmount),
+      left:
+        seasonScrollRef.current.scrollLeft +
+        (direction === "left" ? -scrollAmount : scrollAmount),
       behavior: "smooth",
     });
   };
@@ -176,7 +182,9 @@ export function ShowEpisodes({ seasons, initialSeasonData, showId }: ShowEpisode
     if (!episodeScrollRef.current) return;
     const scrollAmount = 300;
     episodeScrollRef.current.scrollTo({
-      left: episodeScrollRef.current.scrollLeft + (direction === "left" ? -scrollAmount : scrollAmount),
+      left:
+        episodeScrollRef.current.scrollLeft +
+        (direction === "left" ? -scrollAmount : scrollAmount),
       behavior: "smooth",
     });
   };
@@ -218,7 +226,7 @@ export function ShowEpisodes({ seasons, initialSeasonData, showId }: ShowEpisode
           {/* Season Selection Island */}
           <div
             className={cn(
-              "flex h-12 items-center gap-0 rounded-full",
+              "flex h-12 items-center gap-0 rounded-full px-1",
               "bg-black/80 backdrop-blur-xl shadow-xl ring-2 ring-white/10",
               seasonNeedsScroll ? "flex-1 min-w-0" : "",
             )}
@@ -244,13 +252,20 @@ export function ShowEpisodes({ seasons, initialSeasonData, showId }: ShowEpisode
             )}
 
             {/* Scrollable Seasons */}
-            <div className={cn("relative", seasonNeedsScroll ? "flex-1 min-w-0" : "")}>
+            <div
+              className={cn(
+                "relative",
+                seasonNeedsScroll ? "flex-1 min-w-0" : "",
+              )}
+            >
               <div
                 ref={seasonScrollRef}
                 onScroll={checkSeasonScroll}
                 className={cn(
                   "flex gap-1",
-                  seasonNeedsScroll ? "overflow-x-auto scrollbar-hide scroll-smooth" : "",
+                  seasonNeedsScroll
+                    ? "overflow-x-auto scrollbar-hide scroll-smooth"
+                    : "",
                 )}
                 style={
                   seasonNeedsScroll
@@ -262,11 +277,14 @@ export function ShowEpisodes({ seasons, initialSeasonData, showId }: ShowEpisode
                 }
               >
                 {seasons.map((season) => {
-                  const isSelected = selectedSeason === season.seasonNumber.toString();
+                  const isSelected =
+                    selectedSeason === season.seasonNumber.toString();
                   return (
                     <button
                       key={season.id}
-                      onClick={() => handleSeasonChange(season.seasonNumber.toString())}
+                      onClick={() =>
+                        handleSeasonChange(season.seasonNumber.toString())
+                      }
                       className={cn(
                         "flex h-10 shrink-0 items-center justify-center px-4 rounded-full transition-all duration-200",
                         "text-sm font-medium",
@@ -370,16 +388,12 @@ export function ShowEpisodes({ seasons, initialSeasonData, showId }: ShowEpisode
         {/* Episodes - Horizontal Scrollable */}
         <div className="relative">
           {loading ? (
-          <div
-            className={cn(
-              "flex gap-4 overflow-x-hidden p-4",
-            )}
-          >
-            {Array.from({ length: 4 }).map((_, i) => (
-              <EpisodeCardSkeleton key={i} />
-            ))}
-          </div>
-        ) : currentSeasonData ? (
+            <div className={cn("flex gap-4 overflow-x-hidden p-4")}>
+              {Array.from({ length: 4 }).map((_, i) => (
+                <EpisodeCardSkeleton key={i} />
+              ))}
+            </div>
+          ) : currentSeasonData ? (
             <>
               <div
                 ref={episodeScrollRef}
@@ -404,7 +418,9 @@ export function ShowEpisodes({ seasons, initialSeasonData, showId }: ShowEpisode
                 style={
                   {
                     "--left-fade-width": canScrollEpisodeLeft ? "48px" : "0px",
-                    "--right-fade-width": canScrollEpisodeRight ? "48px" : "0px",
+                    "--right-fade-width": canScrollEpisodeRight
+                      ? "48px"
+                      : "0px",
                   } as React.CSSProperties
                 }
                 className={cn(
@@ -412,8 +428,12 @@ export function ShowEpisodes({ seasons, initialSeasonData, showId }: ShowEpisode
                   "before:absolute before:inset-y-0 before:left-0 before:transition-[width,opacity] before:duration-300 before:content-['']",
                   "after:absolute after:inset-y-0 after:right-0 after:transition-[width,opacity] after:duration-300 after:content-['']",
                   "before:w-[var(--left-fade-width)] after:w-[var(--right-fade-width)]",
-                  canScrollEpisodeLeft ? "before:opacity-100" : "before:opacity-0",
-                  canScrollEpisodeRight ? "after:opacity-100" : "after:opacity-0",
+                  canScrollEpisodeLeft
+                    ? "before:opacity-100"
+                    : "before:opacity-0",
+                  canScrollEpisodeRight
+                    ? "after:opacity-100"
+                    : "after:opacity-0",
                   "before:from-background before:bg-gradient-to-r before:to-transparent",
                   "after:from-background after:bg-gradient-to-l after:to-transparent",
                 )}
