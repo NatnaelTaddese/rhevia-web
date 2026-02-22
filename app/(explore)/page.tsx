@@ -4,7 +4,15 @@ import { HeroCarousel } from "@/components/explore/hero-carousel";
 import { HeroSkeleton } from "@/components/explore/hero-skeleton";
 import { PopularMoviesSection } from "@/components/explore/popular-movies-section";
 import { PopularSeriesSection } from "@/components/explore/popular-series-section";
+import { StreamingCatalogSection } from "@/components/explore/streaming-catalog-section";
 import { getTrendingMovies, getPopularMoviesCards, getPopularTVShowsCards } from "@/lib/explore-data";
+import {
+  getStreamingCatalogs,
+  getProviderLogos,
+  HOMEPAGE_PROVIDERS,
+  type StreamingCatalogMeta,
+  type StreamingProvider,
+} from "@/lib/streaming-catalog";
 
 export const dynamic = "force-dynamic";
 
@@ -43,6 +51,44 @@ async function PopularSeriesSectionWrapper() {
   return <PopularSeriesSection series={series} />;
 }
 
+async function StreamingCatalogsSection() {
+  const [movieCatalogs, seriesCatalogs, providerLogos] = await Promise.all([
+    getStreamingCatalogs("movie", HOMEPAGE_PROVIDERS),
+    getStreamingCatalogs("series", HOMEPAGE_PROVIDERS),
+    getProviderLogos(),
+  ]);
+
+  return (
+    <>
+      {HOMEPAGE_PROVIDERS.map((providerId) => {
+        const logoData = providerLogos.get(providerId);
+        const provider: StreamingProvider = {
+          id: providerId,
+          name: logoData?.name || providerId.toUpperCase(),
+          logoUrl: logoData?.logoUrl || null,
+          tmdbProviderId: 0,
+        };
+
+        const movies = movieCatalogs.get(providerId) || [];
+        const series = seriesCatalogs.get(providerId) || [];
+        const items = movies.length > 0 ? movies : series;
+        const type = movies.length > 0 ? "movie" : "series";
+
+        if (!items.length) return null;
+
+        return (
+          <StreamingCatalogSection
+            key={providerId}
+            provider={provider}
+            items={items}
+            type={type}
+          />
+        );
+      })}
+    </>
+  );
+}
+
 export default function Page() {
   return (
     <main className="min-h-screen">
@@ -54,6 +100,9 @@ export default function Page() {
       </Suspense>
       <Suspense fallback={null}>
         <PopularSeriesSectionWrapper />
+      </Suspense>
+      <Suspense fallback={null}>
+        <StreamingCatalogsSection />
       </Suspense>
     </main>
   );

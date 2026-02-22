@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import type { Metadata } from "next";
 
 import { ShowHero } from "@/components/shows/show-hero";
 import { ShowTrailers } from "@/components/shows/show-trailers";
@@ -21,6 +22,25 @@ interface ShowPageProps {
   params: Promise<{
     id: string;
   }>;
+}
+
+export async function generateMetadata({ params }: ShowPageProps): Promise<Metadata> {
+  const { id } = await params;
+  const showId = parseInt(id, 10);
+
+  if (isNaN(showId)) {
+    return { title: "Show Not Found" };
+  }
+
+  const show = await getShowDetailsData(showId);
+
+  if (!show) {
+    return { title: "Show Not Found" };
+  }
+
+  return {
+    title: show.name,
+  };
 }
 
 async function ShowContent({ id }: { id: number }) {

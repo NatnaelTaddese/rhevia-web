@@ -10,6 +10,18 @@ export interface HeroMovie {
   voteAverage: number;
 }
 
+export interface Top10Item {
+  id: number;
+  tmdbId: number;
+  title: string;
+  overview: string;
+  posterUrl: string;
+  backdropUrl: string;
+  logoUrl: string | null;
+  year: string;
+  voteAverage: number;
+}
+
 export interface MovieCardData {
   id: number;
   title: string;
@@ -24,6 +36,100 @@ export interface TVShowCardData {
   posterUrl: string;
   airDateRange: string;
   voteAverage: number;
+}
+
+export async function getTop10Movies(): Promise<Top10Item[]> {
+  try {
+    const response = await tmdb.getTrendingMovies("week");
+
+    const filteredMovies = response.results
+      .filter(
+        (movie): movie is TMDBMovie & { backdrop_path: string; poster_path: string } =>
+          movie.backdrop_path !== null && movie.poster_path !== null,
+      )
+      .slice(0, 10);
+
+    const moviesWithLogos = await Promise.all(
+      filteredMovies.map(async (movie) => {
+        let logoUrl: string | null = null;
+
+        try {
+          const images = await tmdb.getMovieImages(movie.id);
+          const logo =
+            images.logos.find((l) => l.iso_639_1 === "en") || images.logos[0];
+          if (logo) {
+            logoUrl = getLogoUrl(logo.file_path, "w500");
+          }
+        } catch {
+          // If logo fetch fails, we'll just use the title
+        }
+
+        return {
+          id: movie.id,
+          tmdbId: movie.id,
+          title: movie.title,
+          overview: movie.overview,
+          posterUrl: getPosterUrl(movie.poster_path, "large") as string,
+          backdropUrl: getBackdropUrl(movie.backdrop_path, "original") as string,
+          logoUrl,
+          year: movie.release_date ? movie.release_date.split("-")[0] : "",
+          voteAverage: Math.round(movie.vote_average * 10) / 10,
+        };
+      }),
+    );
+
+    return moviesWithLogos;
+  } catch (error) {
+    console.error("Failed to fetch top 10 movies:", error);
+    return [];
+  }
+}
+
+export async function getTop10TVShows(): Promise<Top10Item[]> {
+  try {
+    const response = await tmdb.getTrendingTVShows("week");
+
+    const filteredShows = response.results
+      .filter(
+        (show): show is TMDBTVShow & { backdrop_path: string; poster_path: string } =>
+          show.backdrop_path !== null && show.poster_path !== null,
+      )
+      .slice(0, 10);
+
+    const showsWithLogos = await Promise.all(
+      filteredShows.map(async (show) => {
+        let logoUrl: string | null = null;
+
+        try {
+          const images = await tmdb.getTVImages(show.id);
+          const logo =
+            images.logos.find((l) => l.iso_639_1 === "en") || images.logos[0];
+          if (logo) {
+            logoUrl = getLogoUrl(logo.file_path, "w500");
+          }
+        } catch {
+          // If logo fetch fails, we'll just use the title
+        }
+
+        return {
+          id: show.id,
+          tmdbId: show.id,
+          title: show.name,
+          overview: show.overview,
+          posterUrl: getPosterUrl(show.poster_path, "large") as string,
+          backdropUrl: getBackdropUrl(show.backdrop_path, "original") as string,
+          logoUrl,
+          year: show.first_air_date ? show.first_air_date.split("-")[0] : "",
+          voteAverage: Math.round(show.vote_average * 10) / 10,
+        };
+      }),
+    );
+
+    return showsWithLogos;
+  } catch (error) {
+    console.error("Failed to fetch top 10 TV shows:", error);
+    return [];
+  }
 }
 
 export async function getTrendingMovies(limit = 10): Promise<HeroMovie[]> {

@@ -13,6 +13,16 @@ const nextConfig: NextConfig = {
         hostname: "img.youtube.com",
         pathname: "/vi/**",
       },
+      {
+        protocol: "https",
+        hostname: "images.justwatch.com",
+        pathname: "/poster/**",
+      },
+      {
+        protocol: "https",
+        hostname: "live.metahub.space",
+        pathname: "/poster/**",
+      },
     ],
   },
 };

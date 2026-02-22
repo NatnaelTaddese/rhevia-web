@@ -259,6 +259,10 @@ export interface TMDBWatchProvidersResponse {
   };
 }
 
+export interface TMDBProvidersListResponse {
+  results: TMDBWatchProvider[];
+}
+
 export interface TMDBReleaseDate {
   certification: string;
   iso_639_1: string;
@@ -649,6 +653,11 @@ class TMDBClient {
   // TV Season Details
   async getTVSeasonDetails(tvId: number, seasonNumber: number): Promise<TMDBSeasonDetails> {
     return this.fetch<TMDBSeasonDetails>(`/tv/${tvId}/season/${seasonNumber}`);
+  }
+
+  // Watch Providers List
+  async getWatchProvidersList(type: "movie" | "tv" = "movie"): Promise<TMDBProvidersListResponse> {
+    return this.fetch<TMDBProvidersListResponse>(`/watch/providers/${type}`, { watch_region: "US" });
   }
 }
 

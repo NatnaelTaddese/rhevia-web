@@ -141,20 +141,35 @@ app/                    # Next.js App Router pages
     login/page.tsx
     signup/page.tsx
   (explore)/            # Explore route group
-    movies/page.tsx
-    shows/page.tsx
+    page.tsx            # Homepage with hero carousel, popular sections, streaming catalogs
+    movies/
+      page.tsx          # Movies page with Top 10 hero
+      [id]/page.tsx     # Movie details page
+    shows/
+      page.tsx          # Shows page with Top 10 hero
+      [id]/page.tsx     # Show details page
   layout.tsx            # Root layout
   globals.css           # Tailwind CSS v4 config
 components/
   ui/                   # shadcn/ui components
   auth/                 # Auth-related components
   explore/              # Explore page components
+    hero-carousel.tsx   # Homepage hero carousel
+    top10-hero.tsx      # Top 10 trending hero section
+    streaming-catalog-section.tsx  # Streaming provider sections
+  movies/               # Movie detail page components
+  shows/                # Show detail page components
   theme-provider.tsx    # next-themes provider
 lib/
   utils.ts              # cn() utility
   auth-client.ts        # Better Auth client
   eden.ts               # Elysia Eden API client
   tmdb.ts               # TMDB integration
+  explore-data.ts       # Homepage data fetching
+  movie-data.ts         # Movie page data fetching
+  show-data.ts          # Show page data fetching
+  show-actions.ts       # Server actions for shows
+  streaming-catalog.ts  # Streaming catalog integration
 types/
   index.ts              # Type re-exports
   server.d.ts           # Backend API types (auto-generated)

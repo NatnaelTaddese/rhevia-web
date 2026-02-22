@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import type { Metadata } from "next";
 
 import { MovieHero } from "@/components/movies/movie-hero";
 import { MovieTrailers } from "@/components/movies/movie-trailers";
@@ -21,6 +22,25 @@ interface MoviePageProps {
   params: Promise<{
     id: string;
   }>;
+}
+
+export async function generateMetadata({ params }: MoviePageProps): Promise<Metadata> {
+  const { id } = await params;
+  const movieId = parseInt(id, 10);
+
+  if (isNaN(movieId)) {
+    return { title: "Movie Not Found" };
+  }
+
+  const movie = await getMovieDetailsData(movieId);
+
+  if (!movie) {
+    return { title: "Movie Not Found" };
+  }
+
+  return {
+    title: movie.title,
+  };
 }
 
 async function MovieContent({ id }: { id: number }) {
