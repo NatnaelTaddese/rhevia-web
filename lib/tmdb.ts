@@ -77,6 +77,9 @@ export interface TMDBTVShow {
 export interface TMDBTVShowDetails {
   id: number;
   name: string;
+  original_name: string;
+  tagline: string;
+  overview: string;
   first_air_date: string;
   last_air_date: string | null;
   in_production: boolean;
@@ -85,6 +88,69 @@ export interface TMDBTVShowDetails {
   vote_average: number;
   vote_count: number;
   popularity: number;
+  status: string;
+  type: string;
+  number_of_seasons: number;
+  number_of_episodes: number;
+  episode_run_time: number[];
+  genres: TMDBGenre[];
+  networks: {
+    id: number;
+    name: string;
+    logo_path: string | null;
+    origin_country: string;
+  }[];
+  production_companies: {
+    id: number;
+    name: string;
+    logo_path: string | null;
+    origin_country: string;
+  }[];
+  spoken_languages: {
+    english_name: string;
+    iso_639_1: string;
+    name: string;
+  }[];
+  origin_country: string[];
+  original_language: string;
+  seasons: TMDBSeason[];
+}
+
+export interface TMDBSeason {
+  id: number;
+  name: string;
+  season_number: number;
+  episode_count: number;
+  overview: string;
+  air_date: string | null;
+  poster_path: string | null;
+}
+
+export interface TMDBEpisode {
+  id: number;
+  name: string;
+  overview: string;
+  episode_number: number;
+  season_number: number;
+  still_path: string | null;
+  air_date: string | null;
+  runtime: number | null;
+  vote_average: number;
+}
+
+export interface TMDBSeasonDetails {
+  id: number;
+  name: string;
+  season_number: number;
+  episodes: TMDBEpisode[];
+}
+
+export interface TMDBContentRatingsResponse {
+  id: number;
+  results: {
+    iso_3166_1: string;
+    rating: string;
+  }[];
 }
 
 export interface TMDBMovieDetails {
@@ -157,6 +223,58 @@ export interface TMDBCreditsResponse {
   crew: TMDBCrewMember[];
 }
 
+export interface TMDBCollection {
+  id: number;
+  name: string;
+  overview: string;
+  poster_path: string | null;
+  backdrop_path: string | null;
+  parts: {
+    id: number;
+    title: string;
+    poster_path: string | null;
+    backdrop_path: string | null;
+    release_date: string;
+    vote_average: number;
+    overview: string;
+  }[];
+}
+
+export interface TMDBWatchProvider {
+  logo_path: string;
+  provider_id: number;
+  provider_name: string;
+  display_priority: number;
+}
+
+export interface TMDBWatchProvidersResponse {
+  id: number;
+  results: {
+    [countryCode: string]: {
+      link: string;
+      flatrate?: TMDBWatchProvider[];
+      rent?: TMDBWatchProvider[];
+      buy?: TMDBWatchProvider[];
+    };
+  };
+}
+
+export interface TMDBReleaseDate {
+  certification: string;
+  iso_639_1: string;
+  note: string;
+  release_date: string;
+  type: number;
+}
+
+export interface TMDBReleaseDatesResponse {
+  id: number;
+  results: {
+    iso_3166_1: string;
+    release_dates: TMDBReleaseDate[];
+  }[];
+}
+
 export interface TMDBPaginatedResponse<T> {
   page: number;
   results: T[];
@@ -171,6 +289,40 @@ export interface TMDBGenre {
 
 export interface TMDBGenresResponse {
   genres: TMDBGenre[];
+}
+
+export interface TMDBMovieDetails {
+  id: number;
+  title: string;
+  original_title: string;
+  tagline: string;
+  overview: string;
+  poster_path: string | null;
+  backdrop_path: string | null;
+  release_date: string;
+  runtime: number;
+  vote_average: number;
+  vote_count: number;
+  popularity: number;
+  budget: number;
+  revenue: number;
+  status: string;
+  genres: TMDBGenre[];
+  belongs_to_collection: TMDBCollection | null;
+  production_companies: {
+    id: number;
+    name: string;
+    logo_path: string | null;
+    origin_country: string;
+  }[];
+  spoken_languages: {
+    english_name: string;
+    iso_639_1: string;
+    name: string;
+  }[];
+  origin_country: string[];
+  original_language: string;
+  adult: boolean;
 }
 
 // Helper functions
@@ -413,6 +565,68 @@ class TMDBClient {
   // Movie Credits (cast & crew)
   async getMovieCredits(movieId: number): Promise<TMDBCreditsResponse> {
     return this.fetch<TMDBCreditsResponse>(`/movie/${movieId}/credits`);
+  }
+
+  // Collection
+  async getCollection(collectionId: number): Promise<TMDBCollection> {
+    return this.fetch<TMDBCollection>(`/collection/${collectionId}`);
+  }
+
+  // Similar Movies
+  async getSimilarMovies(
+    movieId: number,
+    page = 1,
+  ): Promise<TMDBPaginatedResponse<TMDBMovie>> {
+    return this.fetch<TMDBPaginatedResponse<TMDBMovie>>(
+      `/movie/${movieId}/similar`,
+      { page: page.toString() },
+    );
+  }
+
+  // Watch Providers
+  async getMovieWatchProviders(movieId: number): Promise<TMDBWatchProvidersResponse> {
+    return this.fetch<TMDBWatchProvidersResponse>(`/movie/${movieId}/watch/providers`);
+  }
+
+  // Release Dates (for age ratings)
+  async getMovieReleaseDates(movieId: number): Promise<TMDBReleaseDatesResponse> {
+    return this.fetch<TMDBReleaseDatesResponse>(`/movie/${movieId}/release_dates`);
+  }
+
+  // TV Show Videos
+  async getTVVideos(tvId: number): Promise<TMDBVideosResponse> {
+    return this.fetch<TMDBVideosResponse>(`/tv/${tvId}/videos`);
+  }
+
+  // TV Show Credits
+  async getTVCredits(tvId: number): Promise<TMDBCreditsResponse> {
+    return this.fetch<TMDBCreditsResponse>(`/tv/${tvId}/credits`);
+  }
+
+  // Similar TV Shows
+  async getSimilarTVShows(
+    tvId: number,
+    page = 1,
+  ): Promise<TMDBPaginatedResponse<TMDBTVShow>> {
+    return this.fetch<TMDBPaginatedResponse<TMDBTVShow>>(
+      `/tv/${tvId}/similar`,
+      { page: page.toString() },
+    );
+  }
+
+  // TV Watch Providers
+  async getTVWatchProviders(tvId: number): Promise<TMDBWatchProvidersResponse> {
+    return this.fetch<TMDBWatchProvidersResponse>(`/tv/${tvId}/watch/providers`);
+  }
+
+  // TV Content Ratings (for age ratings)
+  async getTVContentRatings(tvId: number): Promise<TMDBContentRatingsResponse> {
+    return this.fetch<TMDBContentRatingsResponse>(`/tv/${tvId}/content_ratings`);
+  }
+
+  // TV Season Details
+  async getTVSeasonDetails(tvId: number, seasonNumber: number): Promise<TMDBSeasonDetails> {
+    return this.fetch<TMDBSeasonDetails>(`/tv/${tvId}/season/${seasonNumber}`);
   }
 }
 

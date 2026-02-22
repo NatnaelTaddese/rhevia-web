@@ -17,23 +17,32 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { MovieInfoCard } from "./movie-info-card";
-import type { MovieDetails, MovieInfo } from "@/lib/movie-data";
+import { ShowInfoCard } from "./show-info-card";
+import type { ShowDetails, ShowInfo } from "@/lib/show-data";
 
-interface MovieHeroProps {
-  movie: MovieDetails;
-  movieInfo: MovieInfo;
+interface ShowHeroProps {
+  show: ShowDetails;
+  showInfo: ShowInfo;
 }
 
-function formatRuntime(minutes: number): string {
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
+function formatAirDateRange(firstYear: string, lastYear: string | null, inProduction: boolean): string {
+  if (!firstYear) return "";
+  if (inProduction) return `${firstYear} - Present`;
+  if (lastYear && firstYear !== lastYear) return `${firstYear} - ${lastYear}`;
+  return firstYear;
+}
+
+function formatEpisodeRuntime(minutes: number[]): string {
+  if (!minutes.length) return "";
+  const avg = Math.round(minutes.reduce((a, b) => a + b, 0) / minutes.length);
+  const hours = Math.floor(avg / 60);
+  const mins = avg % 60;
   if (hours === 0) return `${mins}m`;
   if (mins === 0) return `${hours}h`;
   return `${hours}h ${mins}m`;
 }
 
-export function MovieHero({ movie, movieInfo }: MovieHeroProps) {
+export function ShowHero({ show, showInfo }: ShowHeroProps) {
   const [watched, setWatched] = useState(false);
   const [favourite, setFavourite] = useState(false);
   const { state: copyState, copy } = useCopyToClipboard();
@@ -42,10 +51,10 @@ export function MovieHero({ movie, movieInfo }: MovieHeroProps) {
     <section className="relative w-full min-h-[90vh] sm:min-h-[70vh] overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0">
-        {movie.backdropUrl && (
+        {show.backdropUrl && (
           <Image
-            src={movie.backdropUrl}
-            alt={movie.title}
+            src={show.backdropUrl}
+            alt={show.name}
             fill
             priority
             className="object-cover object-top"
@@ -62,25 +71,25 @@ export function MovieHero({ movie, movieInfo }: MovieHeroProps) {
           {/* Main Content */}
           <div className="flex-1 min-w-0 max-w-3xl space-y-6">
             {/* Logo or Title */}
-            {movie.logoUrl ? (
+            {show.logoUrl ? (
               <div className="relative h-20 md:h-28 w-full max-w-md">
                 <Image
-                  src={movie.logoUrl}
-                  alt={movie.title}
+                  src={show.logoUrl}
+                  alt={show.name}
                   fill
                   className="object-contain object-left"
                 />
               </div>
             ) : (
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white">
-                {movie.title}
+                {show.name}
               </h1>
             )}
 
             {/* Tagline */}
-            {movie.tagline && (
+            {show.tagline && (
               <p className="text-md sm:text-lg md:text-xl text-white/40">
-                &quot;{movie.tagline}&quot;
+                &quot;{show.tagline}&quot;
               </p>
             )}
 
@@ -89,26 +98,32 @@ export function MovieHero({ movie, movieInfo }: MovieHeroProps) {
               <span className="flex items-center gap-1">
                 <span className="text-yellow-500">★</span>
                 <span className="text-white font-medium">
-                  {movie.voteAverage}
+                  {show.voteAverage}
                 </span>
                 <span className="text-white/40">
-                  ({movie.voteCount.toLocaleString()})
+                  ({show.voteCount.toLocaleString()})
                 </span>
               </span>
               <span className="w-1 h-1 rounded-full bg-white/40" />
-              <span>{movie.releaseYear}</span>
-              {movie.runtime > 0 && (
+              <span>{formatAirDateRange(show.firstAirYear, show.lastAirYear, show.inProduction)}</span>
+              {show.numberOfSeasons > 0 && (
                 <>
                   <span className="w-1 h-1 rounded-full bg-white/40" />
-                  <span>{formatRuntime(movie.runtime)}</span>
+                  <span>{show.numberOfSeasons} Season{show.numberOfSeasons !== 1 ? "s" : ""}</span>
+                </>
+              )}
+              {show.episodeRunTime.length > 0 && (
+                <>
+                  <span className="w-1 h-1 rounded-full bg-white/40" />
+                  <span>{formatEpisodeRuntime(show.episodeRunTime)}</span>
                 </>
               )}
             </div>
 
             {/* Genres */}
-            {movie.genres.length > 0 && (
+            {show.genres.length > 0 && (
               <div className="flex flex-wrap gap-2">
-                {movie.genres.map((genre) => (
+                {show.genres.map((genre) => (
                   <span
                     key={genre.id}
                     className="px-3 py-1 text-xs font-medium text-white/80 bg-white/10 rounded-full select-none"
@@ -120,9 +135,9 @@ export function MovieHero({ movie, movieInfo }: MovieHeroProps) {
             )}
 
             {/* Overview */}
-            {movie.overview && (
+            {show.overview && (
               <p className="text-base md:text-lg text-white/70 leading-relaxed max-w-2xl line-clamp-4 font-sf-pro">
-                {movie.overview}
+                {show.overview}
               </p>
             )}
 
@@ -214,7 +229,7 @@ export function MovieHero({ movie, movieInfo }: MovieHeroProps) {
 
           {/* Sidebar - Desktop Only */}
           <aside className="hidden xl:block w-80 shrink-0 pb-8">
-            <MovieInfoCard info={movieInfo} />
+            <ShowInfoCard info={showInfo} />
           </aside>
         </div>
       </div>

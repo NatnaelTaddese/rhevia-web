@@ -3,9 +3,16 @@ import { Suspense } from "react";
 
 import { MovieHero } from "@/components/movies/movie-hero";
 import { MovieTrailers } from "@/components/movies/movie-trailers";
+import { MovieCollectionSection } from "@/components/movies/movie-collection";
+import { MovieCreditsSection } from "@/components/movies/movie-credits";
+import { SimilarMoviesSection } from "@/components/movies/similar-movies";
 import {
   getMovieDetailsData,
   getMovieVideosData,
+  getMovieCreditsData,
+  getMovieCollectionData,
+  getSimilarMoviesData,
+  getMovieInfoData,
 } from "@/lib/movie-data";
 
 export const dynamic = "force-dynamic";
@@ -17,19 +24,33 @@ interface MoviePageProps {
 }
 
 async function MovieContent({ id }: { id: number }) {
-  const [movie, videos] = await Promise.all([
-    getMovieDetailsData(id),
-    getMovieVideosData(id),
-  ]);
+  const movie = await getMovieDetailsData(id);
 
   if (!movie) {
     notFound();
   }
 
+  const [videos, credits, collection, similarMovies, movieInfo] = await Promise.all([
+    getMovieVideosData(id),
+    getMovieCreditsData(id),
+    movie.collectionId ? getMovieCollectionData(movie.collectionId) : Promise.resolve(null),
+    getSimilarMoviesData(id),
+    getMovieInfoData(id),
+  ]);
+
   return (
     <>
-      <MovieHero movie={movie} />
-      {videos.length > 0 && <MovieTrailers videos={videos} />}
+      <MovieHero movie={movie} movieInfo={movieInfo} />
+      <div className="container mx-auto px-4">
+        {videos.length > 0 && <MovieTrailers videos={videos} />}
+        {collection && (
+          <MovieCollectionSection collection={collection} currentMovieId={id} />
+        )}
+        {(credits.cast.length > 0 || credits.crew.length > 0) && (
+          <MovieCreditsSection credits={credits} />
+        )}
+        {similarMovies.length > 0 && <SimilarMoviesSection movies={similarMovies} />}
+      </div>
     </>
   );
 }
