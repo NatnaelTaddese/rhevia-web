@@ -14,8 +14,8 @@ import {
   getSimilarShowsData,
   getRecommendedShowsData,
   getShowInfoData,
-  getSeasonEpisodesData,
 } from "@/lib/show-data";
+import { getSeasonEpisodesData } from "@/lib/show-actions";
 
 export const dynamic = "force-dynamic";
 
