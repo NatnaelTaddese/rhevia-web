@@ -1,6 +1,15 @@
 import { tmdb, getBackdropUrl, getPosterUrl, getLogoUrl } from "@/lib/tmdb";
 import type { TMDBWatchProvider } from "@/lib/tmdb";
 
+const DETAILS_CACHE_TTL = 86400 * 1000; // 24 hours
+const showDetailsCache = new Map<number, { data: ShowDetails; timestamp: number }>();
+const showVideosCache = new Map<number, { data: ShowVideo[]; timestamp: number }>();
+const showCreditsCache = new Map<number, { data: ShowCredits; timestamp: number }>();
+const similarShowsCache = new Map<number, { data: SimilarShow[]; timestamp: number }>();
+const recommendedShowsCache = new Map<number, { data: SimilarShow[]; timestamp: number }>();
+const showInfoCache = new Map<number, { data: ShowInfo; timestamp: number }>();
+const seasonEpisodesCache = new Map<string, { data: SeasonEpisodes | null; timestamp: number }>(); // key: "tvId-seasonNumber"
+
 export interface ShowDetails {
   id: number;
   name: string;
@@ -133,6 +142,11 @@ export interface ShowInfo {
 }
 
 export async function getShowDetailsData(tvId: number): Promise<ShowDetails | null> {
+  const cached = showDetailsCache.get(tvId);
+  if (cached && Date.now() - cached.timestamp < DETAILS_CACHE_TTL) {
+    return cached.data;
+  }
+
   try {
     const [details, images] = await Promise.all([
       tmdb.getTVShowDetails(tvId),
@@ -144,7 +158,7 @@ export async function getShowDetailsData(tvId: number): Promise<ShowDetails | nu
     const firstAirYear = details.first_air_date ? details.first_air_date.split("-")[0] : "";
     const lastAirYear = details.last_air_date ? details.last_air_date.split("-")[0] : null;
 
-    return {
+    const result = {
       id: details.id,
       name: details.name,
       tagline: details.tagline,
@@ -187,6 +201,9 @@ export async function getShowDetailsData(tvId: number): Promise<ShowDetails | nu
           posterUrl: getPosterUrl(s.poster_path, "medium"),
         })),
     };
+
+    showDetailsCache.set(tvId, { data: result, timestamp: Date.now() });
+    return result;
   } catch (error) {
     console.error("Failed to fetch TV show details:", error);
     return null;
@@ -194,6 +211,11 @@ export async function getShowDetailsData(tvId: number): Promise<ShowDetails | nu
 }
 
 export async function getShowVideosData(tvId: number): Promise<ShowVideo[]> {
+  const cached = showVideosCache.get(tvId);
+  if (cached && Date.now() - cached.timestamp < DETAILS_CACHE_TTL) {
+    return cached.data;
+  }
+
   try {
     const response = await tmdb.getTVVideos(tvId);
 
@@ -209,7 +231,7 @@ export async function getShowVideosData(tvId: number): Promise<ShowVideo[]> {
         return 0;
       });
 
-    return trailers.map((video) => ({
+    const result = trailers.map((video) => ({
       id: video.id,
       key: video.key,
       name: video.name,
@@ -217,6 +239,9 @@ export async function getShowVideosData(tvId: number): Promise<ShowVideo[]> {
       official: video.official,
       site: video.site,
     }));
+
+    showVideosCache.set(tvId, { data: result, timestamp: Date.now() });
+    return result;
   } catch (error) {
     console.error("Failed to fetch TV show videos:", error);
     return [];
@@ -224,10 +249,15 @@ export async function getShowVideosData(tvId: number): Promise<ShowVideo[]> {
 }
 
 export async function getShowCreditsData(tvId: number): Promise<ShowCredits> {
+  const cached = showCreditsCache.get(tvId);
+  if (cached && Date.now() - cached.timestamp < DETAILS_CACHE_TTL) {
+    return cached.data;
+  }
+
   try {
     const response = await tmdb.getTVCredits(tvId);
 
-    return {
+    const result = {
       cast: response.cast
         .sort((a, b) => a.order - b.order)
         .slice(0, 20)
@@ -255,6 +285,9 @@ export async function getShowCreditsData(tvId: number): Promise<ShowCredits> {
             : null,
         })),
     };
+
+    showCreditsCache.set(tvId, { data: result, timestamp: Date.now() });
+    return result;
   } catch (error) {
     console.error("Failed to fetch TV show credits:", error);
     return { cast: [], crew: [] };
@@ -262,10 +295,15 @@ export async function getShowCreditsData(tvId: number): Promise<ShowCredits> {
 }
 
 export async function getSimilarShowsData(tvId: number, limit = 20): Promise<SimilarShow[]> {
+  const cached = similarShowsCache.get(tvId);
+  if (cached && Date.now() - cached.timestamp < DETAILS_CACHE_TTL) {
+    return cached.data.slice(0, limit);
+  }
+
   try {
     const response = await tmdb.getSimilarTVShows(tvId);
 
-    return response.results
+    const result = response.results
       .filter((show) => show.poster_path)
       .slice(0, limit)
       .map((show) => ({
@@ -277,6 +315,9 @@ export async function getSimilarShowsData(tvId: number, limit = 20): Promise<Sim
         voteAverage: Math.round(show.vote_average * 10) / 10,
         overview: show.overview,
       }));
+
+    similarShowsCache.set(tvId, { data: result, timestamp: Date.now() });
+    return result;
   } catch (error) {
     console.error("Failed to fetch similar TV shows:", error);
     return [];
@@ -284,10 +325,15 @@ export async function getSimilarShowsData(tvId: number, limit = 20): Promise<Sim
 }
 
 export async function getRecommendedShowsData(tvId: number, limit = 20): Promise<SimilarShow[]> {
+  const cached = recommendedShowsCache.get(tvId);
+  if (cached && Date.now() - cached.timestamp < DETAILS_CACHE_TTL) {
+    return cached.data.slice(0, limit);
+  }
+
   try {
     const response = await tmdb.getTVRecommendations(tvId);
 
-    return response.results
+    const result = response.results
       .filter((show) => show.poster_path)
       .slice(0, limit)
       .map((show) => ({
@@ -299,6 +345,9 @@ export async function getRecommendedShowsData(tvId: number, limit = 20): Promise
         voteAverage: Math.round(show.vote_average * 10) / 10,
         overview: show.overview,
       }));
+
+    recommendedShowsCache.set(tvId, { data: result, timestamp: Date.now() });
+    return result;
   } catch (error) {
     console.error("Failed to fetch recommended TV shows:", error);
     return [];
@@ -306,6 +355,11 @@ export async function getRecommendedShowsData(tvId: number, limit = 20): Promise
 }
 
 export async function getShowInfoData(tvId: number): Promise<ShowInfo> {
+  const cached = showInfoCache.get(tvId);
+  if (cached && Date.now() - cached.timestamp < DETAILS_CACHE_TTL) {
+    return cached.data;
+  }
+
   try {
     const [details, contentRatings, watchProvidersResponse] = await Promise.all([
       tmdb.getTVShowDetails(tvId),
@@ -333,7 +387,7 @@ export async function getShowInfoData(tvId: number): Promise<ShowInfo> {
         }
       : null;
 
-    return {
+    const result = {
       originalLanguage: details.original_language,
       spokenLanguages: details.spoken_languages.map((l) => l.english_name),
       ageRating,
@@ -349,6 +403,9 @@ export async function getShowInfoData(tvId: number): Promise<ShowInfo> {
         logoUrl: c.logo_path ? getLogoUrl(c.logo_path, "w185") : null,
       })),
     };
+
+    showInfoCache.set(tvId, { data: result, timestamp: Date.now() });
+    return result;
   } catch (error) {
     console.error("Failed to fetch TV show info:", error);
     return {

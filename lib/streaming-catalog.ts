@@ -52,9 +52,13 @@ export interface StreamingCatalogMeta {
 }
 
 let providersCache: Map<string, StreamingProvider> | null = null;
+let providersCacheTimestamp: number = 0;
+const PROVIDERS_CACHE_TTL = 86400 * 1000; // 24 hours
+let catalogCache: Map<string, { data: StreamingCatalogMeta[]; timestamp: number }> | null = null;
+const CATALOG_CACHE_TTL = 3600 * 1000; // 1 hour in milliseconds
 
 async function getProvidersWithLogos(): Promise<Map<string, StreamingProvider>> {
-  if (providersCache) {
+  if (providersCache && Date.now() - providersCacheTimestamp < PROVIDERS_CACHE_TTL) {
     return providersCache;
   }
 
@@ -87,6 +91,7 @@ async function getProvidersWithLogos(): Promise<Map<string, StreamingProvider>> 
     }
 
     providersCache = providers;
+    providersCacheTimestamp = Date.now();
     return providers;
   } catch (error) {
     console.error("Failed to fetch providers:", error);
@@ -128,9 +133,18 @@ async function fetchStreamingCatalog(
   type: "movie" | "series",
   providerId: string
 ): Promise<StreamingCatalogMeta[]> {
+  const cacheKey = `${type}-${providerId}`;
+  
+  // Check in-memory cache first
+  const cached = catalogCache?.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CATALOG_CACHE_TTL) {
+    return cached.data;
+  }
+
   try {
     const response = await fetch(
-      `${STREAMING_CATALOG_BASE_URL}/catalog/${type}/${providerId}.json`
+      `${STREAMING_CATALOG_BASE_URL}/catalog/${type}/${providerId}.json`,
+      { next: { revalidate: 3600 } }
     );
 
     if (!response.ok) {
@@ -139,7 +153,7 @@ async function fetchStreamingCatalog(
 
     const data = await response.json();
 
-    return data.metas
+    const result = data.metas
       .filter((item: StreamingCatalogItem) => item.moviedb_id)
       .slice(0, 20)
       .map((item: StreamingCatalogItem) => ({
@@ -151,6 +165,12 @@ async function fetchStreamingCatalog(
         tmdbId: item.moviedb_id,
         type: item.type,
       }));
+
+    // Store in cache
+    if (!catalogCache) catalogCache = new Map();
+    catalogCache.set(cacheKey, { data: result, timestamp: Date.now() });
+
+    return result;
   } catch (error) {
     console.error(`Failed to fetch streaming catalog: ${error}`);
     return [];

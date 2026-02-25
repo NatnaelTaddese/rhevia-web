@@ -1,5 +1,16 @@
 import { tmdb, getBackdropUrl, getPosterUrl, getLogoUrl, type TMDBMovie, type TMDBTVShow } from "@/lib/tmdb";
 
+const CACHE_TTL = 3600 * 1000; // 1 hour
+const DETAILS_CACHE_TTL = 86400 * 1000; // 24 hours
+
+let top10MoviesCache: { data: Top10Item[]; timestamp: number } | null = null;
+let top10TVShowsCache: { data: Top10Item[]; timestamp: number } | null = null;
+let trendingMoviesCache: { data: HeroMovie[]; timestamp: number } | null = null;
+let popularMoviesCache: { data: HeroMovie[]; timestamp: number } | null = null;
+let nowPlayingMoviesCache: { data: HeroMovie[]; timestamp: number } | null = null;
+let popularMoviesCardsCache: { data: MovieCardData[]; timestamp: number } | null = null;
+let popularTVShowsCardsCache: { data: TVShowCardData[]; timestamp: number } | null = null;
+
 export interface HeroMovie {
   id: number;
   title: string;
@@ -39,6 +50,11 @@ export interface TVShowCardData {
 }
 
 export async function getTop10Movies(): Promise<Top10Item[]> {
+  // Check cache first
+  if (top10MoviesCache && Date.now() - top10MoviesCache.timestamp < CACHE_TTL) {
+    return top10MoviesCache.data;
+  }
+
   try {
     const response = await tmdb.getTrendingMovies("week");
 
@@ -78,6 +94,8 @@ export async function getTop10Movies(): Promise<Top10Item[]> {
       }),
     );
 
+    // Update cache
+    top10MoviesCache = { data: moviesWithLogos, timestamp: Date.now() };
     return moviesWithLogos;
   } catch (error) {
     console.error("Failed to fetch top 10 movies:", error);
@@ -86,6 +104,11 @@ export async function getTop10Movies(): Promise<Top10Item[]> {
 }
 
 export async function getTop10TVShows(): Promise<Top10Item[]> {
+  // Check cache first
+  if (top10TVShowsCache && Date.now() - top10TVShowsCache.timestamp < CACHE_TTL) {
+    return top10TVShowsCache.data;
+  }
+
   try {
     const response = await tmdb.getTrendingTVShows("week");
 
@@ -125,6 +148,8 @@ export async function getTop10TVShows(): Promise<Top10Item[]> {
       }),
     );
 
+    // Update cache
+    top10TVShowsCache = { data: showsWithLogos, timestamp: Date.now() };
     return showsWithLogos;
   } catch (error) {
     console.error("Failed to fetch top 10 TV shows:", error);
@@ -133,10 +158,13 @@ export async function getTop10TVShows(): Promise<Top10Item[]> {
 }
 
 export async function getTrendingMovies(limit = 10): Promise<HeroMovie[]> {
+  if (trendingMoviesCache && Date.now() - trendingMoviesCache.timestamp < CACHE_TTL) {
+    return trendingMoviesCache.data.slice(0, limit);
+  }
+
   try {
     const response = await tmdb.getTrendingMovies("week");
 
-    // Filter movies that have backdrop images
     const filteredMovies = response.results
       .filter(
         (movie): movie is TMDBMovie & { backdrop_path: string } =>
@@ -144,14 +172,12 @@ export async function getTrendingMovies(limit = 10): Promise<HeroMovie[]> {
       )
       .slice(0, limit);
 
-    // Fetch logos for each movie in parallel
     const moviesWithLogos = await Promise.all(
       filteredMovies.map(async (movie) => {
         let logoUrl: string | null = null;
 
         try {
           const images = await tmdb.getMovieImages(movie.id);
-          // Get the first English logo, or any logo if no English one exists
           const logo =
             images.logos.find((l) => l.iso_639_1 === "en") || images.logos[0];
           if (logo) {
@@ -178,6 +204,7 @@ export async function getTrendingMovies(limit = 10): Promise<HeroMovie[]> {
       }),
     );
 
+    trendingMoviesCache = { data: moviesWithLogos, timestamp: Date.now() };
     return moviesWithLogos;
   } catch (error) {
     console.error("Failed to fetch trending movies:", error);
@@ -186,6 +213,10 @@ export async function getTrendingMovies(limit = 10): Promise<HeroMovie[]> {
 }
 
 export async function getPopularMovies(limit = 20): Promise<HeroMovie[]> {
+  if (popularMoviesCache && Date.now() - popularMoviesCache.timestamp < CACHE_TTL) {
+    return popularMoviesCache.data.slice(0, limit);
+  }
+
   try {
     const response = await tmdb.getPopularMovies();
 
@@ -228,6 +259,7 @@ export async function getPopularMovies(limit = 20): Promise<HeroMovie[]> {
       }),
     );
 
+    popularMoviesCache = { data: moviesWithLogos, timestamp: Date.now() };
     return moviesWithLogos;
   } catch (error) {
     console.error("Failed to fetch popular movies:", error);
@@ -236,6 +268,10 @@ export async function getPopularMovies(limit = 20): Promise<HeroMovie[]> {
 }
 
 export async function getNowPlayingMovies(limit = 20): Promise<HeroMovie[]> {
+  if (nowPlayingMoviesCache && Date.now() - nowPlayingMoviesCache.timestamp < CACHE_TTL) {
+    return nowPlayingMoviesCache.data.slice(0, limit);
+  }
+
   try {
     const response = await tmdb.getNowPlayingMovies();
 
@@ -278,6 +314,7 @@ export async function getNowPlayingMovies(limit = 20): Promise<HeroMovie[]> {
       }),
     );
 
+    nowPlayingMoviesCache = { data: moviesWithLogos, timestamp: Date.now() };
     return moviesWithLogos;
   } catch (error) {
     console.error("Failed to fetch now playing movies:", error);
@@ -296,13 +333,16 @@ export async function getPopularMoviesCards(limit = 20): Promise<MovieCardData[]
       )
       .slice(0, limit);
 
-    return filteredMovies.map((movie) => ({
+    const result = filteredMovies.map((movie) => ({
       id: movie.id,
       title: movie.title,
       posterUrl: getPosterUrl(movie.poster_path, "medium") as string,
       releaseYear: movie.release_date ? movie.release_date.split("-")[0] : "",
       voteAverage: Math.round(movie.vote_average * 10) / 10,
     }));
+
+    popularMoviesCardsCache = { data: result, timestamp: Date.now() };
+    return result;
   } catch (error) {
     console.error("Failed to fetch popular movies:", error);
     return [];
@@ -310,6 +350,9 @@ export async function getPopularMoviesCards(limit = 20): Promise<MovieCardData[]
 }
 
 export async function getPopularTVShowsCards(limit = 20): Promise<TVShowCardData[]> {
+  if (popularTVShowsCardsCache && Date.now() - popularTVShowsCardsCache.timestamp < CACHE_TTL) {
+    return popularTVShowsCardsCache.data.slice(0, limit);
+  }
   try {
     const response = await tmdb.getPopularTVShows();
 
@@ -360,6 +403,7 @@ export async function getPopularTVShowsCards(limit = 20): Promise<TVShowCardData
       }),
     );
 
+    popularTVShowsCardsCache = { data: showsWithDetails, timestamp: Date.now() };
     return showsWithDetails;
   } catch (error) {
     console.error("Failed to fetch popular TV shows:", error);

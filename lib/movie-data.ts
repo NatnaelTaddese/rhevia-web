@@ -1,6 +1,16 @@
 import { tmdb, getBackdropUrl, getPosterUrl, getLogoUrl } from "@/lib/tmdb";
 import type { TMDBWatchProvider } from "@/lib/tmdb";
 
+const DETAILS_CACHE_TTL = 86400 * 1000; // 24 hours
+const movieDetailsCache = new Map<number, { data: MovieDetails; timestamp: number }>();
+const movieVideosCache = new Map<number, { data: MovieVideo[]; timestamp: number }>();
+const movieCastCache = new Map<number, { data: MovieCast[]; timestamp: number }>();
+const movieCreditsCache = new Map<number, { data: MovieCredits; timestamp: number }>();
+const movieCollectionCache = new Map<number, { data: MovieCollection | null; timestamp: number }>();
+const similarMoviesCache = new Map<number, { data: SimilarMovie[]; timestamp: number }>();
+const recommendedMoviesCache = new Map<number, { data: SimilarMovie[]; timestamp: number }>();
+const movieInfoCache = new Map<number, { data: MovieInfo; timestamp: number }>();
+
 export interface MovieDetails {
   id: number;
   title: string;
@@ -106,6 +116,11 @@ export interface MovieInfo {
 }
 
 export async function getMovieDetailsData(movieId: number): Promise<MovieDetails | null> {
+  const cached = movieDetailsCache.get(movieId);
+  if (cached && Date.now() - cached.timestamp < DETAILS_CACHE_TTL) {
+    return cached.data;
+  }
+
   try {
     const [details, images] = await Promise.all([
       tmdb.getMovieDetails(movieId),
@@ -114,7 +129,7 @@ export async function getMovieDetailsData(movieId: number): Promise<MovieDetails
 
     const logo = images.logos.find((l) => l.iso_639_1 === "en") || images.logos[0];
 
-    return {
+    const result = {
       id: details.id,
       title: details.title,
       tagline: details.tagline,
@@ -139,6 +154,9 @@ export async function getMovieDetailsData(movieId: number): Promise<MovieDetails
       })),
       collectionId: details.belongs_to_collection?.id ?? null,
     };
+
+    movieDetailsCache.set(movieId, { data: result, timestamp: Date.now() });
+    return result;
   } catch (error) {
     console.error("Failed to fetch movie details:", error);
     return null;
@@ -146,6 +164,11 @@ export async function getMovieDetailsData(movieId: number): Promise<MovieDetails
 }
 
 export async function getMovieVideosData(movieId: number): Promise<MovieVideo[]> {
+  const cached = movieVideosCache.get(movieId);
+  if (cached && Date.now() - cached.timestamp < DETAILS_CACHE_TTL) {
+    return cached.data;
+  }
+
   try {
     const response = await tmdb.getMovieVideos(movieId);
 
@@ -161,7 +184,7 @@ export async function getMovieVideosData(movieId: number): Promise<MovieVideo[]>
         return 0;
       });
 
-    return trailers.map((video) => ({
+    const result = trailers.map((video) => ({
       id: video.id,
       key: video.key,
       name: video.name,
@@ -169,6 +192,9 @@ export async function getMovieVideosData(movieId: number): Promise<MovieVideo[]>
       official: video.official,
       site: video.site,
     }));
+
+    movieVideosCache.set(movieId, { data: result, timestamp: Date.now() });
+    return result;
   } catch (error) {
     console.error("Failed to fetch movie videos:", error);
     return [];
@@ -176,10 +202,15 @@ export async function getMovieVideosData(movieId: number): Promise<MovieVideo[]>
 }
 
 export async function getMovieCastData(movieId: number, limit = 20): Promise<MovieCast[]> {
+  const cached = movieCastCache.get(movieId);
+  if (cached && Date.now() - cached.timestamp < DETAILS_CACHE_TTL) {
+    return cached.data.slice(0, limit);
+  }
+
   try {
     const response = await tmdb.getMovieCredits(movieId);
 
-    return response.cast
+    const result = response.cast
       .sort((a, b) => a.order - b.order)
       .slice(0, limit)
       .map((member) => ({
@@ -191,6 +222,9 @@ export async function getMovieCastData(movieId: number, limit = 20): Promise<Mov
           : null,
         order: member.order,
       }));
+
+    movieCastCache.set(movieId, { data: result, timestamp: Date.now() });
+    return result;
   } catch (error) {
     console.error("Failed to fetch movie cast:", error);
     return [];
@@ -198,10 +232,15 @@ export async function getMovieCastData(movieId: number, limit = 20): Promise<Mov
 }
 
 export async function getMovieCreditsData(movieId: number): Promise<MovieCredits> {
+  const cached = movieCreditsCache.get(movieId);
+  if (cached && Date.now() - cached.timestamp < DETAILS_CACHE_TTL) {
+    return cached.data;
+  }
+
   try {
     const response = await tmdb.getMovieCredits(movieId);
 
-    return {
+    const result = {
       cast: response.cast
         .sort((a, b) => a.order - b.order)
         .slice(0, 20)
@@ -229,6 +268,9 @@ export async function getMovieCreditsData(movieId: number): Promise<MovieCredits
             : null,
         })),
     };
+
+    movieCreditsCache.set(movieId, { data: result, timestamp: Date.now() });
+    return result;
   } catch (error) {
     console.error("Failed to fetch movie credits:", error);
     return { cast: [], crew: [] };
@@ -236,10 +278,15 @@ export async function getMovieCreditsData(movieId: number): Promise<MovieCredits
 }
 
 export async function getMovieCollectionData(collectionId: number): Promise<MovieCollection | null> {
+  const cached = movieCollectionCache.get(collectionId);
+  if (cached && Date.now() - cached.timestamp < DETAILS_CACHE_TTL) {
+    return cached.data;
+  }
+
   try {
     const collection = await tmdb.getCollection(collectionId);
 
-    return {
+    const result = {
       id: collection.id,
       name: collection.name,
       movies: collection.parts
@@ -252,6 +299,9 @@ export async function getMovieCollectionData(collectionId: number): Promise<Movi
           voteAverage: Math.round(movie.vote_average * 10) / 10,
         })),
     };
+
+    movieCollectionCache.set(collectionId, { data: result, timestamp: Date.now() });
+    return result;
   } catch (error) {
     console.error("Failed to fetch collection:", error);
     return null;
@@ -259,10 +309,15 @@ export async function getMovieCollectionData(collectionId: number): Promise<Movi
 }
 
 export async function getSimilarMoviesData(movieId: number, limit = 20): Promise<SimilarMovie[]> {
+  const cached = similarMoviesCache.get(movieId);
+  if (cached && Date.now() - cached.timestamp < DETAILS_CACHE_TTL) {
+    return cached.data.slice(0, limit);
+  }
+
   try {
     const response = await tmdb.getSimilarMovies(movieId);
 
-    return response.results
+    const result = response.results
       .filter((movie) => movie.poster_path)
       .slice(0, limit)
       .map((movie) => ({
@@ -274,6 +329,9 @@ export async function getSimilarMoviesData(movieId: number, limit = 20): Promise
         voteAverage: Math.round(movie.vote_average * 10) / 10,
         overview: movie.overview,
       }));
+
+    similarMoviesCache.set(movieId, { data: result, timestamp: Date.now() });
+    return result;
   } catch (error) {
     console.error("Failed to fetch similar movies:", error);
     return [];
@@ -281,10 +339,15 @@ export async function getSimilarMoviesData(movieId: number, limit = 20): Promise
 }
 
 export async function getRecommendedMoviesData(movieId: number, limit = 20): Promise<SimilarMovie[]> {
+  const cached = recommendedMoviesCache.get(movieId);
+  if (cached && Date.now() - cached.timestamp < DETAILS_CACHE_TTL) {
+    return cached.data.slice(0, limit);
+  }
+
   try {
     const response = await tmdb.getMovieRecommendations(movieId);
 
-    return response.results
+    const result = response.results
       .filter((movie) => movie.poster_path)
       .slice(0, limit)
       .map((movie) => ({
@@ -296,6 +359,9 @@ export async function getRecommendedMoviesData(movieId: number, limit = 20): Pro
         voteAverage: Math.round(movie.vote_average * 10) / 10,
         overview: movie.overview,
       }));
+
+    recommendedMoviesCache.set(movieId, { data: result, timestamp: Date.now() });
+    return result;
   } catch (error) {
     console.error("Failed to fetch recommended movies:", error);
     return [];
@@ -303,6 +369,11 @@ export async function getRecommendedMoviesData(movieId: number, limit = 20): Pro
 }
 
 export async function getMovieInfoData(movieId: number): Promise<MovieInfo> {
+  const cached = movieInfoCache.get(movieId);
+  if (cached && Date.now() - cached.timestamp < DETAILS_CACHE_TTL) {
+    return cached.data;
+  }
+
   try {
     const [details, releaseDates, watchProvidersResponse] = await Promise.all([
       tmdb.getMovieDetails(movieId),
@@ -332,7 +403,7 @@ export async function getMovieInfoData(movieId: number): Promise<MovieInfo> {
         }
       : null;
 
-    return {
+    const result = {
       originalLanguage: details.original_language,
       spokenLanguages: details.spoken_languages.map((l) => l.english_name),
       ageRating,
@@ -343,6 +414,9 @@ export async function getMovieInfoData(movieId: number): Promise<MovieInfo> {
         logoUrl: c.logo_path ? getLogoUrl(c.logo_path, "w185") : null,
       })),
     };
+
+    movieInfoCache.set(movieId, { data: result, timestamp: Date.now() });
+    return result;
   } catch (error) {
     console.error("Failed to fetch movie info:", error);
     return {

@@ -3,11 +3,20 @@
 import { tmdb, getBackdropUrl } from "@/lib/tmdb";
 import type { SeasonEpisodes } from "@/lib/show-data";
 
+const DETAILS_CACHE_TTL = 86400 * 1000; // 24 hours
+const seasonEpisodesCache = new Map<string, { data: SeasonEpisodes | null; timestamp: number }>();
+
 export async function getSeasonEpisodesData(tvId: number, seasonNumber: number): Promise<SeasonEpisodes | null> {
+  const cacheKey = `${tvId}-${seasonNumber}`;
+  const cached = seasonEpisodesCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < DETAILS_CACHE_TTL) {
+    return cached.data;
+  }
+
   try {
     const season = await tmdb.getTVSeasonDetails(tvId, seasonNumber);
 
-    return {
+    const result = {
       seasonNumber: season.season_number,
       seasonName: season.name,
       episodes: season.episodes.map((ep) => ({
@@ -22,6 +31,9 @@ export async function getSeasonEpisodesData(tvId: number, seasonNumber: number):
         voteAverage: Math.round(ep.vote_average * 10) / 10,
       })),
     };
+
+    seasonEpisodesCache.set(cacheKey, { data: result, timestamp: Date.now() });
+    return result;
   } catch (error) {
     console.error(`Failed to fetch season ${seasonNumber}:`, error);
     return null;
